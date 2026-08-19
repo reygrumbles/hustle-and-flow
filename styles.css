@@ -307,6 +307,27 @@ body.focus-mode .lane-card .rhyme-word { padding: 7px 5px; font-size: 11px; }
 .dual-stage.single-bank-view .lane-card.offscreen-lane { display: none; }
 .dual-stage.single-bank-view .lane-card.view-lane { display: flex; flex-direction: column; }
 
+.dual-next {
+  touch-action: manipulation;
+  position: fixed;
+  z-index: 99;
+  right: 62px;
+  bottom: calc(10px + env(safe-area-inset-bottom));
+  width: 76px;
+  min-height: 48px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #6a5d4e;
+  border-bottom: 3px solid var(--orange);
+  background: rgba(13, 12, 10, .96);
+  color: var(--paper);
+  box-shadow: 0 8px 24px rgba(0,0,0,.72), inset 0 1px rgba(255,255,255,.04);
+  font: 900 11px/1 Arial, sans-serif;
+  letter-spacing: .12em;
+}
+.dual-next:active { transform: translateY(1px); border-color: var(--orange); }
+body:not(.focus-mode) .dual-next { display: none !important; }
+
 .dual-swap {
   touch-action: manipulation;
   pointer-events: auto;
@@ -315,7 +336,7 @@ body.focus-mode .lane-card .rhyme-word { padding: 7px 5px; font-size: 11px; }
   position: fixed;
   z-index: 96;
   left: max(10px, env(safe-area-inset-left));
-  right: 70px;
+  right: 146px;
   bottom: calc(10px + env(safe-area-inset-bottom));
   min-height: 48px;
   display: grid;
@@ -396,6 +417,14 @@ body.focus-mode .dual-stage .lane-card.view-lane .rhyme-bank {
   overscroll-behavior: contain;
 }
 body.focus-mode .dual-swap {
+  right: 146px;
+  bottom: calc(8px + env(safe-area-inset-bottom));
+  min-height: 46px;
+  background: rgba(10,10,9,.94);
+}
+body.focus-mode .dual-next {
+  display: grid;
+  right: 62px;
   bottom: calc(8px + env(safe-area-inset-bottom));
   min-height: 46px;
   background: rgba(10,10,9,.94);
@@ -410,7 +439,8 @@ body.focus-mode .focus-dock {
 }
 
 @media (max-width: 390px) {
-  .dual-swap { right: 62px; gap: 6px; padding-inline: 7px; }
+  .dual-swap { right: 136px; gap: 6px; padding-inline: 7px; }
+  .dual-next { right: 58px; width: 70px; }
   .dual-swap-status { font-size: 7px; }
   .dual-swap > span:last-child { font-size: 13px; }
 }

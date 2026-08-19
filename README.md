@@ -40,3 +40,11 @@ Restores the Dual Cypher bank-switch control required by the JavaScript runtime.
 - Hidden/visible lane state is mirrored to accessibility state.
 - Vercel CDN wrapper is repinned after the code commit so preview assets match the tested GitHub code.
 - PWA cache version bumped to prevent stale JavaScript from surviving the update.
+
+
+## v0.5.4 Persistent Dual NEXT
+
+- Dual Focus keeps NEXT visible beside OTHER BANK and the three-dot menu.
+- NEXT advances only the currently visible Dual lane.
+- NEXT resets only that lane timer; the hidden lane continues uninterrupted.
+- Lane B keeps the original +15 second entrance.

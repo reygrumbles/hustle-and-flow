@@ -68,6 +68,7 @@ const els = {
   dualSwapStatus: $('#dualSwapStatus'),
   dualSwapWord: $('#dualSwapWord'),
   dualSwapTimer: $('#dualSwapTimer'),
+  dualNextBtn: $('#dualNextBtn'),
   holdBtn: $('#holdBtn'), nextBtn: $('#nextBtn'), stopBtn: $('#stopBtn'),
   focusHandle: $('#focusHandle'), focusDock: $('#focusDock'),
   focusHoldBtn: $('#focusHoldBtn'), focusNextBtn: $('#focusNextBtn'), exitFocusBtn: $('#exitFocusBtn'),
@@ -265,7 +266,9 @@ function setViewedLane(which) {
 }
 
 function updateDualSwap() {
-  if (state.mode !== 'dual' || !state.running) {
+  const activeDual = state.mode === 'dual' && state.running;
+  els.dualNextBtn.classList.toggle('hidden', !activeDual);
+  if (!activeDual) {
     els.dualSwapBtn.classList.add('hidden');
     return;
   }
@@ -422,6 +425,7 @@ function stopSession() {
   state.dual.bStarted = false;
   state.dual.unseen = { a: false, b: false };
   els.dualSwapBtn.classList.add('hidden');
+  els.dualNextBtn.classList.add('hidden');
   updateControls();
   resetStageCopy();
   if (state.mode === 'cypher') els.primaryBtn.textContent = 'START CYPHER';
@@ -886,6 +890,15 @@ els.holdBtn.addEventListener('click', toggleHold);
 els.focusHoldBtn.addEventListener('click', toggleHold);
 els.nextBtn.addEventListener('click', nextNow);
 els.focusNextBtn.addEventListener('click', nextNow);
+els.dualNextBtn.addEventListener('pointerup', event => {
+  event.preventDefault();
+  event.stopPropagation();
+  nextNow();
+  els.dualNextBtn.blur();
+});
+els.dualNextBtn.addEventListener('click', event => {
+  if (event.detail === 0) nextNow();
+});
 els.stopBtn.addEventListener('click', stopSession);
 els.focusBtn.addEventListener('click', enterFocus);
 els.exitFocusBtn.addEventListener('click', exitFocus);
