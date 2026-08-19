@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#111111" />
-  <meta name="description" content="Hustle & Flow — a rhyme training and freestyle cypher app." />
+  <meta name="theme-color" content="#0b0b0b" />
+  <meta name="description" content="Hustle & Flow — freestyle rhyme training." />
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" href="./icons/icon.svg" type="image/svg+xml" />
   <title>Hustle & Flow</title>
@@ -12,83 +12,130 @@
 </head>
 <body>
   <div class="grain" aria-hidden="true"></div>
+
   <main class="app-shell">
-    <header class="masthead">
-      <div class="eyebrow">FREESTYLE TRAINING // WORD COMBAT</div>
-      <h1><span>HUSTLE</span><b>&amp;</b><span>FLOW</span></h1>
-      <p class="tagline">Pick a lane. Catch the word. Keep moving.</p>
+    <header class="masthead setup-ui">
+      <h1><span>HUSTLE</span><b>&amp;</b><span class="flow">FLOW</span></h1>
+      <p>FREESTYLE RHYME TRAINER</p>
     </header>
 
-    <nav class="mode-strip" aria-label="Game mode">
-      <button class="mode-btn active" data-mode="search">WRITE</button>
-      <button class="mode-btn" data-mode="random">RANDOM</button>
-      <button class="mode-btn" data-mode="cypher">CYPHER</button>
-    </nav>
+    <section class="setup-panel setup-ui" aria-label="Session setup">
+      <div class="select-row">
+        <label class="select-box">
+          <span>MODE</span>
+          <select id="modeSelect" aria-label="Mode">
+            <option value="search">WRITE</option>
+            <option value="random">RANDOM</option>
+            <option value="cypher" selected>CYPHER</option>
+            <option value="dual">DUAL CYPHER</option>
+          </select>
+        </label>
 
-    <section class="control-card" id="searchControls">
-      <label for="seedInput">DROP A WORD</label>
-      <div class="input-row">
-        <input id="seedInput" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="concrete" maxlength="40" />
+        <label class="select-box" id="timeSelectBox">
+          <span>TIME</span>
+          <select id="timeSelect" aria-label="Timer">
+            <option value="30" selected>30 SEC</option>
+            <option value="60">60 SEC</option>
+            <option value="90">90 SEC</option>
+          </select>
+        </label>
+
+        <label class="select-box">
+          <span>RHYMES</span>
+          <select id="rhymeSelect" aria-label="Rhyme type">
+            <option value="both" selected>BOTH</option>
+            <option value="perfect">PERFECT</option>
+            <option value="near">NEAR</option>
+          </select>
+        </label>
+      </div>
+
+      <div id="dualNote" class="dual-note hidden">LANE B ENTERS <b>15 SEC</b> AFTER LANE A</div>
+
+      <div id="writeControls" class="mode-controls hidden">
+        <input id="seedInput" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="40" placeholder="drop a word" />
         <button id="searchBtn" class="impact-btn">RUN IT</button>
       </div>
-    </section>
 
-    <section class="control-card hidden" id="randomControls">
-      <p>One hit. One word. Full rhyme bank.</p>
-      <button id="randomBtn" class="impact-btn wide">THROW ME A WORD</button>
-    </section>
-
-    <section class="control-card hidden" id="cypherControls">
-      <div class="cypher-head">
-        <span>AUTO-SWITCH</span>
-        <strong id="timerDisplay">00:30</strong>
-      </div>
-      <div class="timer-options" role="group" aria-label="Cypher timer">
-        <button data-seconds="15">15</button>
-        <button data-seconds="30" class="selected">30</button>
-        <button data-seconds="60">60</button>
-        <button data-seconds="90">90</button>
-      </div>
-      <button id="startCypherBtn" class="impact-btn wide">START CYPHER</button>
-    </section>
-
-    <section class="filter-strip" aria-label="Rhyme type">
-      <span>RHYME BANK</span>
-      <div class="segmented">
-        <button data-rhyme="perfect">PERFECT</button>
-        <button data-rhyme="near">NEAR</button>
-        <button data-rhyme="both" class="selected">BOTH</button>
+      <div class="session-actions">
+        <button id="primaryBtn" class="impact-btn wide">START CYPHER</button>
+        <button id="focusBtn" class="utility-btn" disabled>FOCUS</button>
       </div>
     </section>
 
-    <section class="battle-card" aria-live="polite">
-      <div class="battle-meta">
-        <span id="statusLabel">READY</span>
-        <span id="resultCount">0 WORDS</span>
-      </div>
-      <div class="seed-word" id="seedWord">HUSTLE</div>
-      <div class="divider"></div>
-      <div id="rhymeGrid" class="rhyme-grid">
-        <div class="rhyme-placeholder">
-          <span>01</span><b>pick a mode</b>
-          <span>02</span><b>catch a word</b>
-          <span>03</span><b>run the whole bank</b>
+    <section id="singleStage" class="stage single-stage" aria-live="polite">
+      <div class="word-bar">
+        <div>
+          <span class="lane-tag">CURRENT WORD</span>
+          <strong id="singleWord">GAME</strong>
+        </div>
+        <div class="word-meta">
+          <span id="singleTimer" class="timer">00:30</span>
+          <span id="singleCount" class="count">0 WORDS</span>
         </div>
       </div>
-      <p id="emptyState" class="empty-state hidden">No rhymes found. Hit NEXT and keep moving.</p>
+
+      <div class="bank-head">
+        <h2>RHYME BANK</h2>
+        <span id="singleBreakdown">READY</span>
+      </div>
+      <div id="singleBank" class="rhyme-bank">
+        <div class="empty-copy">Set the mode. Start the session. Run the bank.</div>
+      </div>
     </section>
 
-    <section class="action-bar">
+    <section id="dualStage" class="dual-stage hidden" aria-live="polite">
+      <article class="lane-card active-lane" id="laneA">
+        <div class="lane-head">
+          <div>
+            <span class="lane-tag">LANE A</span>
+            <strong id="wordA">READY</strong>
+          </div>
+          <div class="word-meta">
+            <span id="timerA" class="timer">00:30</span>
+            <span id="countA" class="count">0 WORDS</span>
+          </div>
+        </div>
+        <div id="bankA" class="rhyme-bank compact-bank">
+          <div class="empty-copy">Lane A starts immediately.</div>
+        </div>
+      </article>
+
+      <article class="lane-card waiting" id="laneB">
+        <div class="lane-head">
+          <div>
+            <span class="lane-tag">LANE B // +15 SEC</span>
+            <strong id="wordB">STANDBY</strong>
+          </div>
+          <div class="word-meta">
+            <span id="timerB" class="timer">+00:15</span>
+            <span id="countB" class="count">0 WORDS</span>
+          </div>
+        </div>
+        <div id="bankB" class="rhyme-bank compact-bank">
+          <div class="empty-copy">Second rhyme bank enters after the offset.</div>
+        </div>
+      </article>
+    </section>
+
+    <div class="normal-actions setup-ui">
       <button id="holdBtn" class="utility-btn" disabled>HOLD</button>
-      <button id="nextBtn" class="utility-btn">NEXT</button>
-      <button id="stopBtn" class="utility-btn danger hidden">STOP</button>
-    </section>
+      <button id="nextBtn" class="utility-btn" disabled>NEXT</button>
+      <button id="stopBtn" class="utility-btn danger" disabled>STOP</button>
+    </div>
 
-    <footer>
-      <span>H&amp;F // SESSION 001</span>
-      <span>POWERED BY DATAMUSE</span>
+    <footer class="setup-ui">
+      <span>H&amp;F // SESSION MODE</span>
+      <span>DATAMUSE RHYME BANK</span>
     </footer>
   </main>
+
+  <button id="focusHandle" class="focus-handle hidden" aria-label="Show focus controls">•••</button>
+  <div id="focusDock" class="focus-dock hidden">
+    <button id="focusHoldBtn">HOLD</button>
+    <button id="focusNextBtn">NEXT</button>
+    <button id="exitFocusBtn">EXIT</button>
+  </div>
 
   <script src="./app.js" defer></script>
 </body>
