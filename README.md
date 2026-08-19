@@ -24,3 +24,8 @@ Mobile-first freestyle rhyme trainer.
 ## Recording note
 
 The pitch guard is intentionally conservative in this prototype: it corrects stable tonal sections while fast-changing speech/rap is left mostly untouched. This avoids forcing ordinary rap delivery onto musical notes.
+
+
+## v0.5.1 hotfix
+
+Restores the Dual Cypher bank-switch control required by the JavaScript runtime. This fixes the initialization crash that disabled session controls and hid recording features in v0.5.
