@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#111111" />
+  <meta name="description" content="Hustle & Flow — a rhyme training and freestyle cypher app." />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./icons/icon.svg" type="image/svg+xml" />
+  <title>Hustle & Flow</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <main class="app-shell">
+    <header class="masthead">
+      <div class="eyebrow">FREESTYLE TRAINING // WORD COMBAT</div>
+      <h1><span>HUSTLE</span><b>&amp;</b><span>FLOW</span></h1>
+      <p class="tagline">Pick a lane. Catch the word. Keep moving.</p>
+    </header>
+
+    <nav class="mode-strip" aria-label="Game mode">
+      <button class="mode-btn active" data-mode="search">WRITE</button>
+      <button class="mode-btn" data-mode="random">RANDOM</button>
+      <button class="mode-btn" data-mode="cypher">CYPHER</button>
+    </nav>
+
+    <section class="control-card" id="searchControls">
+      <label for="seedInput">DROP A WORD</label>
+      <div class="input-row">
+        <input id="seedInput" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="concrete" maxlength="40" />
+        <button id="searchBtn" class="impact-btn">RUN IT</button>
+      </div>
+    </section>
+
+    <section class="control-card hidden" id="randomControls">
+      <p>One hit. One word. Full rhyme bank.</p>
+      <button id="randomBtn" class="impact-btn wide">THROW ME A WORD</button>
+    </section>
+
+    <section class="control-card hidden" id="cypherControls">
+      <div class="cypher-head">
+        <span>AUTO-SWITCH</span>
+        <strong id="timerDisplay">00:30</strong>
+      </div>
+      <div class="timer-options" role="group" aria-label="Cypher timer">
+        <button data-seconds="15">15</button>
+        <button data-seconds="30" class="selected">30</button>
+        <button data-seconds="60">60</button>
+        <button data-seconds="90">90</button>
+      </div>
+      <button id="startCypherBtn" class="impact-btn wide">START CYPHER</button>
+    </section>
+
+    <section class="filter-strip" aria-label="Rhyme type">
+      <span>RHYME BANK</span>
+      <div class="segmented">
+        <button data-rhyme="perfect">PERFECT</button>
+        <button data-rhyme="near">NEAR</button>
+        <button data-rhyme="both" class="selected">BOTH</button>
+      </div>
+    </section>
+
+    <section class="battle-card" aria-live="polite">
+      <div class="battle-meta">
+        <span id="statusLabel">READY</span>
+        <span id="resultCount">0 WORDS</span>
+      </div>
+      <div class="seed-word" id="seedWord">HUSTLE</div>
+      <div class="divider"></div>
+      <div id="rhymeGrid" class="rhyme-grid">
+        <div class="rhyme-placeholder">
+          <span>01</span><b>pick a mode</b>
+          <span>02</span><b>catch a word</b>
+          <span>03</span><b>run the whole bank</b>
+        </div>
+      </div>
+      <p id="emptyState" class="empty-state hidden">No rhymes found. Hit NEXT and keep moving.</p>
+    </section>
+
+    <section class="action-bar">
+      <button id="holdBtn" class="utility-btn" disabled>HOLD</button>
+      <button id="nextBtn" class="utility-btn">NEXT</button>
+      <button id="stopBtn" class="utility-btn danger hidden">STOP</button>
+    </section>
+
+    <footer>
+      <span>H&amp;F // SESSION 001</span>
+      <span>POWERED BY DATAMUSE</span>
+    </footer>
+  </main>
+
+  <script src="./app.js" defer></script>
+</body>
+</html>

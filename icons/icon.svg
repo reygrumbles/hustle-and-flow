@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#0a0a0a"/>
+  <path d="M72 107h368v54H72zm0 244h368v54H72z" fill="#f05a19" transform="skewX(-8)"/>
+  <text x="256" y="302" text-anchor="middle" font-family="Arial Black,Impact,sans-serif" font-size="190" font-weight="900" fill="#ddd7c8">H&amp;F</text>
+</svg>

@@ -1,0 +1,12 @@
+{
+  "name": "Hustle & Flow",
+  "short_name": "H&F",
+  "description": "Freestyle rhyme training and timed cypher game.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#111111",
+  "icons": [
+    {"src":"./icons/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+  ]
+}
