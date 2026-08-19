@@ -29,3 +29,14 @@ The pitch guard is intentionally conservative in this prototype: it corrects sta
 ## v0.5.1 hotfix
 
 Restores the Dual Cypher bank-switch control required by the JavaScript runtime. This fixes the initialization crash that disabled session controls and hid recording features in v0.5.
+
+
+## v0.5.3 Dual Cypher reliability pass
+
+- Dual bank switch now uses explicit lane visibility, not CSS classes alone.
+- Mobile switching is bound to pointer input with duplicate-tap protection.
+- Lane B remains unavailable until its original +15 second entrance.
+- Switching never resets Lane A or Lane B timers.
+- Hidden/visible lane state is mirrored to accessibility state.
+- Vercel CDN wrapper is repinned after the code commit so preview assets match the tested GitHub code.
+- PWA cache version bumped to prevent stale JavaScript from surviving the update.

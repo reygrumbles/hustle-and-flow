@@ -308,6 +308,10 @@ body.focus-mode .lane-card .rhyme-word { padding: 7px 5px; font-size: 11px; }
 .dual-stage.single-bank-view .lane-card.view-lane { display: flex; flex-direction: column; }
 
 .dual-swap {
+  touch-action: manipulation;
+  pointer-events: auto;
+  user-select: none;
+  -webkit-user-select: none;
   position: fixed;
   z-index: 96;
   left: max(10px, env(safe-area-inset-left));

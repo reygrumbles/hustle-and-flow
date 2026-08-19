@@ -100,6 +100,7 @@ function setMode(mode) {
   els.writeControls.classList.toggle('hidden', mode !== 'search');
   els.singleStage.classList.toggle('hidden', mode === 'dual');
   els.dualStage.classList.toggle('hidden', mode !== 'dual');
+  els.dualStage.classList.toggle('single-bank-view', mode === 'dual');
   els.dualSwapBtn.classList.add('hidden');
 
   if (mode === 'search') els.primaryBtn.textContent = 'RUN WORD';
@@ -240,15 +241,26 @@ async function loadLane(which, word) {
 }
 
 function setViewedLane(which) {
+  if (which !== 'a' && which !== 'b') return;
   if (which === 'b' && !state.dual.bStarted) return;
+
   state.dual.view = which;
   state.dual.unseen[which] = false;
-  els.laneA.classList.toggle('view-lane', which === 'a');
-  els.laneB.classList.toggle('view-lane', which === 'b');
-  els.laneA.classList.toggle('offscreen-lane', which !== 'a');
-  els.laneB.classList.toggle('offscreen-lane', which !== 'b');
-  els.laneA.classList.toggle('active-lane', which === 'a');
-  els.laneB.classList.toggle('active-lane', which === 'b');
+  els.dualStage.classList.add('single-bank-view');
+
+  const showA = which === 'a';
+  els.laneA.hidden = !showA;
+  els.laneB.hidden = showA;
+
+  els.laneA.classList.toggle('view-lane', showA);
+  els.laneB.classList.toggle('view-lane', !showA);
+  els.laneA.classList.toggle('offscreen-lane', !showA);
+  els.laneB.classList.toggle('offscreen-lane', showA);
+  els.laneA.classList.toggle('active-lane', showA);
+  els.laneB.classList.toggle('active-lane', !showA);
+
+  els.laneA.setAttribute('aria-hidden', String(!showA));
+  els.laneB.setAttribute('aria-hidden', String(showA));
   updateDualSwap();
 }
 
@@ -279,12 +291,26 @@ function updateDualSwap() {
   els.dualSwapTimer.textContent = formatTime(lane.remaining);
 }
 
-function switchDualBank() {
+let lastDualSwapAt = 0;
+
+function switchDualBank(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
   if (state.mode !== 'dual' || !state.running) return;
-  const target = state.dual.view === 'a' ? 'b' : 'a';
+
+  const now = Date.now();
+  if (now - lastDualSwapAt < 220) return;
+
+  const target = els.dualSwapBtn.dataset.target || (state.dual.view === 'a' ? 'b' : 'a');
+  if (target !== 'a' && target !== 'b') return;
   if (target === 'b' && !state.dual.bStarted) return;
+
+  lastDualSwapAt = now;
   setViewedLane(target);
   els.focusDock.classList.add('hidden');
+  els.dualSwapBtn.blur();
 }
 
 function startSingleCypher() {
@@ -324,6 +350,11 @@ function startDual() {
   els.laneB.classList.add('waiting');
 
   state.dual.view = 'a';
+  els.dualStage.classList.add('single-bank-view');
+  els.laneA.hidden = false;
+  els.laneB.hidden = true;
+  els.laneA.setAttribute('aria-hidden', 'false');
+  els.laneB.setAttribute('aria-hidden', 'true');
   els.laneA.classList.add('view-lane', 'active-lane');
   els.laneA.classList.remove('offscreen-lane');
   els.laneB.classList.remove('view-lane', 'active-lane');
@@ -859,7 +890,10 @@ els.stopBtn.addEventListener('click', stopSession);
 els.focusBtn.addEventListener('click', enterFocus);
 els.exitFocusBtn.addEventListener('click', exitFocus);
 els.focusHandle.addEventListener('click', () => els.focusDock.classList.toggle('hidden'));
-els.dualSwapBtn.addEventListener('click', switchDualBank);
+els.dualSwapBtn.addEventListener('pointerup', switchDualBank);
+els.dualSwapBtn.addEventListener('click', event => {
+  if (event.detail === 0) switchDualBank(event);
+});
 els.recordBtn.addEventListener('click', toggleRecording);
 
 document.addEventListener('fullscreenchange', () => {
