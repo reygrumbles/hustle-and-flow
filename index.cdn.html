@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0b0b0b" />
   <meta name="description" content="Hustle & Flow — freestyle rhyme training." />
-  <link rel="manifest" href="https://cdn.jsdelivr.net/gh/reygrumbles/hustle-and-flow@main/manifest.webmanifest" />
-  <link rel="icon" href="https://cdn.jsdelivr.net/gh/reygrumbles/hustle-and-flow@main/icons/icon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="https://cdn.jsdelivr.net/gh/reygrumbles/hustle-and-flow@7dd722e01dae71be3e4839c941345aeb20ce9e06/manifest.webmanifest" />
+  <link rel="icon" href="https://cdn.jsdelivr.net/gh/reygrumbles/hustle-and-flow@7dd722e01dae71be3e4839c941345aeb20ce9e06/icons/icon.svg" type="image/svg+xml" />
   <title>Hustle & Flow</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/reygrumbles/hustle-and-flow@main/styles.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/reygrumbles/hustle-and-flow@7dd722e01dae71be3e4839c941345aeb20ce9e06/styles.css" />
 </head>
 <body>
   <div class="grain" aria-hidden="true"></div>
@@ -130,12 +130,31 @@
       <button id="stopBtn" class="utility-btn danger" disabled>STOP</button>
     </div>
 
+    <section id="recordingTray" class="recording-tray setup-ui hidden" aria-live="polite">
+      <div class="recording-head">
+        <div>
+          <span class="lane-tag">VOCAL TAKE</span>
+          <strong id="recordingStatus">READY</strong>
+        </div>
+        <span id="recordingDuration">00:00</span>
+      </div>
+      <p id="processingNote">Raw vocal is preserved. Hustle &amp; Flow automatically cleans, compresses, levels and gently corrects stable pitched notes after you stop.</p>
+      <div id="recordingPlayers" class="recording-players hidden">
+        <label><span>RAW</span><audio id="rawPlayer" controls preload="metadata"></audio></label>
+        <label><span>POLISHED</span><audio id="polishedPlayer" controls preload="metadata"></audio></label>
+        <a id="savePolished" class="impact-btn save-take" download="hustle-and-flow-polished.wav">SAVE POLISHED</a>
+      </div>
+    </section>
+
     <footer class="setup-ui">
       <span>H&amp;F // SESSION MODE</span>
       <span>DATAMUSE RHYME BANK</span>
     </footer>
   </main>
 
+  <button id="recordBtn" class="record-btn hidden" type="button" aria-label="Record vocal">
+    <span class="record-dot"></span><b id="recordBtnLabel">REC</b><span id="recordClock">00:00</span>
+  </button>
   <button id="focusHandle" class="focus-handle hidden" aria-label="Show focus controls">•••</button>
   <div id="focusDock" class="focus-dock hidden">
     <button id="focusHoldBtn">HOLD</button>
@@ -143,6 +162,6 @@
     <button id="exitFocusBtn">EXIT</button>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/gh/reygrumbles/hustle-and-flow@main/app.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/gh/reygrumbles/hustle-and-flow@7dd722e01dae71be3e4839c941345aeb20ce9e06/app.js" defer></script>
 </body>
 </html>
