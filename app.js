@@ -1,5 +1,4 @@
 const $ = (sel) => document.querySelector(sel);
-const $$ = (sel) => [...document.querySelectorAll(sel)];
 
 const WORDS = [
   'pressure','concrete','vision','hustle','shadow','machine','freedom','city','danger','money',
@@ -7,11 +6,12 @@ const WORDS = [
   'broken','gold','motion','truth','memory','system','summer','winter','focus','energy','legacy',
   'gravity','respect','change','dream','signal','champion','storm','heart','time','loyalty','noise',
   'diamond','reason','moment','control','culture','vintage','hunger','midnight','victory','story',
-  'game','flame','motion','pressure','reason','kingdom','signal','damage','honor','grind','soul'
+  'game','flame','kingdom','damage','honor','grind','soul'
 ];
 
 const savedRhyme = localStorage.getItem('hf-rhyme-type');
 const savedSeconds = Number(localStorage.getItem('hf-seconds'));
+
 const state = {
   mode: 'cypher',
   rhymeType: ['both','perfect','near'].includes(savedRhyme) ? savedRhyme : 'both',
@@ -26,7 +26,8 @@ const state = {
     b: { word: '', remaining: 30, request: 0 },
     bStarted: false,
     offsetRemaining: 15,
-    lastChanged: 'a'
+    view: 'a',
+    unseen: { a: false, b: false }
   }
 };
 
@@ -53,25 +54,26 @@ const els = {
   timerA: $('#timerA'), timerB: $('#timerB'),
   countA: $('#countA'), countB: $('#countB'),
   bankA: $('#bankA'), bankB: $('#bankB'),
+  dualSwapBtn: $('#dualSwapBtn'),
+  dualSwapStatus: $('#dualSwapStatus'),
+  dualSwapWord: $('#dualSwapWord'),
+  dualSwapTimer: $('#dualSwapTimer'),
   holdBtn: $('#holdBtn'), nextBtn: $('#nextBtn'), stopBtn: $('#stopBtn'),
   focusHandle: $('#focusHandle'), focusDock: $('#focusDock'),
   focusHoldBtn: $('#focusHoldBtn'), focusNextBtn: $('#focusNextBtn'), exitFocusBtn: $('#exitFocusBtn')
 };
 
 function formatTime(total) {
-  return `00:${String(Math.max(0, total)).padStart(2, '0')}`;
+  const safe = Math.max(0, Number(total) || 0);
+  const minutes = Math.floor(safe / 60);
+  const seconds = safe % 60;
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
 function randomWord(exclude = []) {
   const blocked = new Set(exclude.filter(Boolean).map(w => w.toLowerCase()));
   const pool = WORDS.filter(w => !blocked.has(w.toLowerCase()));
   return pool[Math.floor(Math.random() * pool.length)] || WORDS[0];
-}
-
-function setActiveLane(which) {
-  state.dual.lastChanged = which;
-  els.laneA.classList.toggle('active-lane', which === 'a');
-  els.laneB.classList.toggle('active-lane', which === 'b');
 }
 
 function setMode(mode) {
@@ -84,11 +86,15 @@ function setMode(mode) {
   els.writeControls.classList.toggle('hidden', mode !== 'search');
   els.singleStage.classList.toggle('hidden', mode === 'dual');
   els.dualStage.classList.toggle('hidden', mode !== 'dual');
+  els.dualSwapBtn.classList.add('hidden');
 
   if (mode === 'search') els.primaryBtn.textContent = 'RUN WORD';
   if (mode === 'random') els.primaryBtn.textContent = 'THROW A WORD';
   if (mode === 'cypher') els.primaryBtn.textContent = 'START CYPHER';
-  if (mode === 'dual') els.primaryBtn.textContent = 'START DUAL CYPHER';
+  if (mode === 'dual') {
+    els.primaryBtn.textContent = 'START DUAL CYPHER';
+    setViewedLane('a');
+  }
 
   resetStageCopy();
 }
@@ -100,6 +106,7 @@ function resetStageCopy() {
   } else {
     els.timerA.textContent = formatTime(state.seconds);
     els.timerB.textContent = '+00:15';
+    updateDualSwap();
   }
 }
 
@@ -107,8 +114,12 @@ async function getRhymes(word) {
   const encoded = encodeURIComponent(word);
   const perfectUrl = `https://api.datamuse.com/words?rel_rhy=${encoded}&md=sp&max=1000`;
   const nearUrl = `https://api.datamuse.com/words?rel_nry=${encoded}&md=sp&max=1000`;
-  const perfectPromise = state.rhymeType === 'near' ? Promise.resolve([]) : fetch(perfectUrl).then(r => r.ok ? r.json() : Promise.reject(r.status));
-  const nearPromise = state.rhymeType === 'perfect' ? Promise.resolve([]) : fetch(nearUrl).then(r => r.ok ? r.json() : Promise.reject(r.status));
+  const perfectPromise = state.rhymeType === 'near'
+    ? Promise.resolve([])
+    : fetch(perfectUrl).then(r => r.ok ? r.json() : Promise.reject(r.status));
+  const nearPromise = state.rhymeType === 'perfect'
+    ? Promise.resolve([])
+    : fetch(nearUrl).then(r => r.ok ? r.json() : Promise.reject(r.status));
   const [perfectRaw, nearRaw] = await Promise.all([perfectPromise, nearPromise]);
 
   const used = new Set([word.toLowerCase()]);
@@ -120,6 +131,7 @@ async function getRhymes(word) {
     }
     return out;
   }, []);
+
   return { perfect: clean(perfectRaw, 'perfect'), near: clean(nearRaw, 'near') };
 }
 
@@ -172,34 +184,93 @@ async function loadSingle(word) {
   }
 }
 
+function laneEls(which) {
+  return which === 'a'
+    ? { word: els.wordA, count: els.countA, bank: els.bankA, card: els.laneA }
+    : { word: els.wordB, count: els.countB, bank: els.bankB, card: els.laneB };
+}
+
+function markLaneUpdated(which) {
+  if (state.dual.view !== which) state.dual.unseen[which] = true;
+  updateDualSwap();
+}
+
 async function loadLane(which, word) {
   const lane = state.dual[which];
   const clean = word.trim().toLowerCase();
   lane.word = clean;
   const req = ++lane.request;
-  const wordEl = which === 'a' ? els.wordA : els.wordB;
-  const countEl = which === 'a' ? els.countA : els.countB;
-  const bankEl = which === 'a' ? els.bankA : els.bankB;
-  const cardEl = which === 'a' ? els.laneA : els.laneB;
-  wordEl.textContent = clean;
-  cardEl.classList.remove('waiting');
-  bankEl.innerHTML = '<div class="empty-copy">Loading rhyme bank…</div>';
-  setActiveLane(which);
+  const view = laneEls(which);
+
+  view.word.textContent = clean;
+  view.card.classList.remove('waiting');
+  view.bank.innerHTML = '<div class="empty-copy">Loading rhyme bank…</div>';
+  markLaneUpdated(which);
 
   try {
     const { perfect, near } = await getRhymes(clean);
     if (req !== lane.request) return;
     const total = perfect.length + near.length;
-    countEl.textContent = `${total} WORD${total === 1 ? '' : 'S'}`;
-    bankEl.innerHTML = total ? bankMarkup(perfect, near) : '<div class="empty-copy">No rhymes found. Rotate the lane.</div>';
-    wireCopy(bankEl);
+    view.count.textContent = `${total} WORD${total === 1 ? '' : 'S'}`;
+    view.bank.innerHTML = total ? bankMarkup(perfect, near) : '<div class="empty-copy">No rhymes found. Rotate the lane.</div>';
+    wireCopy(view.bank);
     els.focusBtn.disabled = false;
     els.nextBtn.disabled = false;
+    updateDualSwap();
   } catch {
     if (req !== lane.request) return;
-    countEl.textContent = '0 WORDS';
-    bankEl.innerHTML = '<div class="empty-copy">Connection miss. This lane will retry on the next word.</div>';
+    view.count.textContent = '0 WORDS';
+    view.bank.innerHTML = '<div class="empty-copy">Connection miss. This lane will retry on the next word.</div>';
+    updateDualSwap();
   }
+}
+
+function setViewedLane(which) {
+  if (which === 'b' && !state.dual.bStarted) return;
+  state.dual.view = which;
+  state.dual.unseen[which] = false;
+  els.laneA.classList.toggle('view-lane', which === 'a');
+  els.laneB.classList.toggle('view-lane', which === 'b');
+  els.laneA.classList.toggle('offscreen-lane', which !== 'a');
+  els.laneB.classList.toggle('offscreen-lane', which !== 'b');
+  els.laneA.classList.toggle('active-lane', which === 'a');
+  els.laneB.classList.toggle('active-lane', which === 'b');
+  updateDualSwap();
+}
+
+function updateDualSwap() {
+  if (state.mode !== 'dual' || !state.running) {
+    els.dualSwapBtn.classList.add('hidden');
+    return;
+  }
+
+  const other = state.dual.view === 'a' ? 'b' : 'a';
+  const lane = state.dual[other];
+  const waitingForB = other === 'b' && !state.dual.bStarted;
+
+  els.dualSwapBtn.classList.remove('hidden');
+  els.dualSwapBtn.disabled = waitingForB;
+  els.dualSwapBtn.dataset.target = other;
+  els.dualSwapBtn.classList.toggle('has-new', !waitingForB && state.dual.unseen[other]);
+
+  if (waitingForB) {
+    els.dualSwapStatus.textContent = 'ENTERS IN';
+    els.dualSwapWord.textContent = 'LANE B';
+    els.dualSwapTimer.textContent = `+${formatTime(state.dual.offsetRemaining)}`;
+    return;
+  }
+
+  els.dualSwapStatus.textContent = state.dual.unseen[other] ? 'NEW BANK' : 'OTHER BANK';
+  els.dualSwapWord.textContent = lane.word || (other === 'a' ? 'LANE A' : 'LANE B');
+  els.dualSwapTimer.textContent = formatTime(lane.remaining);
+}
+
+function switchDualBank() {
+  if (state.mode !== 'dual' || !state.running) return;
+  const target = state.dual.view === 'a' ? 'b' : 'a';
+  if (target === 'b' && !state.dual.bStarted) return;
+  setViewedLane(target);
+  els.focusDock.classList.add('hidden');
 }
 
 function startSingleCypher() {
@@ -211,6 +282,7 @@ function startSingleCypher() {
   loadSingle(randomWord([state.single.word]));
   updateControls();
   els.primaryBtn.textContent = 'RESTART CYPHER';
+
   state.timerId = setInterval(() => {
     if (!state.running || state.held) return;
     state.single.remaining -= 1;
@@ -230,17 +302,28 @@ function startDual() {
   state.dual.b.remaining = state.seconds;
   state.dual.bStarted = false;
   state.dual.offsetRemaining = 15;
+  state.dual.unseen = { a: false, b: false };
+
   els.wordB.textContent = 'STANDBY';
   els.countB.textContent = '0 WORDS';
   els.bankB.innerHTML = '<div class="empty-copy">Lane B enters 15 seconds after Lane A.</div>';
   els.laneB.classList.add('waiting');
+
+  state.dual.view = 'a';
+  els.laneA.classList.add('view-lane', 'active-lane');
+  els.laneA.classList.remove('offscreen-lane');
+  els.laneB.classList.remove('view-lane', 'active-lane');
+  els.laneB.classList.add('offscreen-lane');
+
   loadLane('a', randomWord([state.dual.a.word, state.dual.b.word]));
   updateDualTimers();
   updateControls();
+  updateDualSwap();
   els.primaryBtn.textContent = 'RESTART DUAL';
 
   state.timerId = setInterval(() => {
     if (!state.running || state.held) return;
+
     state.dual.a.remaining -= 1;
     if (state.dual.a.remaining <= 0) {
       state.dual.a.remaining = state.seconds;
@@ -261,14 +344,21 @@ function startDual() {
         loadLane('b', randomWord([state.dual.a.word, state.dual.b.word]));
       }
     }
+
     updateDualTimers();
+    updateDualSwap();
   }, 1000);
 }
 
-function updateSingleTimer() { els.singleTimer.textContent = formatTime(state.single.remaining); }
+function updateSingleTimer() {
+  els.singleTimer.textContent = formatTime(state.single.remaining);
+}
+
 function updateDualTimers() {
   els.timerA.textContent = formatTime(state.dual.a.remaining);
-  els.timerB.textContent = state.dual.bStarted ? formatTime(state.dual.b.remaining) : `+${formatTime(state.dual.offsetRemaining)}`;
+  els.timerB.textContent = state.dual.bStarted
+    ? formatTime(state.dual.b.remaining)
+    : `+${formatTime(state.dual.offsetRemaining)}`;
 }
 
 function stopTimerOnly() {
@@ -285,6 +375,8 @@ function stopSession() {
   state.dual.b.remaining = state.seconds;
   state.dual.offsetRemaining = 15;
   state.dual.bStarted = false;
+  state.dual.unseen = { a: false, b: false };
+  els.dualSwapBtn.classList.add('hidden');
   updateControls();
   resetStageCopy();
   if (state.mode === 'cypher') els.primaryBtn.textContent = 'START CYPHER';
@@ -314,26 +406,25 @@ function nextNow() {
     loadSingle(word);
     return;
   }
+
   if (state.mode === 'random') {
     loadSingle(randomWord([state.single.word]));
     return;
   }
+
   if (state.mode === 'cypher') {
     state.single.remaining = state.seconds;
     updateSingleTimer();
     loadSingle(randomWord([state.single.word]));
     return;
   }
+
   if (state.mode === 'dual') {
-    const which = state.dual.lastChanged === 'a' ? 'b' : 'a';
-    if (which === 'b' && !state.dual.bStarted) {
-      state.dual.bStarted = true;
-      state.dual.b.remaining = state.seconds;
-    } else {
-      state.dual[which].remaining = state.seconds;
-    }
+    const which = state.dual.view;
+    state.dual[which].remaining = state.seconds;
     loadLane(which, randomWord([state.dual.a.word, state.dual.b.word]));
     updateDualTimers();
+    updateDualSwap();
   }
 }
 
@@ -344,17 +435,21 @@ function primaryAction() {
     loadSingle(randomWord([state.single.word]));
   } else if (state.mode === 'cypher') {
     startSingleCypher();
+    enterFocus();
   } else {
     startDual();
+    enterFocus();
   }
 }
 
 async function enterFocus() {
-  if (els.focusBtn.disabled) return;
+  if (els.focusBtn.disabled && !state.running) return;
   state.focus = true;
   document.body.classList.add('focus-mode');
   els.focusHandle.classList.remove('hidden');
   els.focusDock.classList.add('hidden');
+  if (state.mode === 'dual') updateDualSwap();
+
   try {
     if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
       await document.documentElement.requestFullscreen({ navigationUI: 'hide' });
@@ -367,6 +462,7 @@ async function exitFocus() {
   document.body.classList.remove('focus-mode');
   els.focusHandle.classList.add('hidden');
   els.focusDock.classList.add('hidden');
+
   try {
     if (document.fullscreenElement && document.exitFullscreen) await document.exitFullscreen();
   } catch (_) {}
@@ -389,7 +485,9 @@ els.rhymeSelect.addEventListener('change', e => {
   if (state.mode === 'dual') {
     if (state.dual.a.word) loadLane('a', state.dual.a.word);
     if (state.dual.bStarted && state.dual.b.word) loadLane('b', state.dual.b.word);
-  } else if (state.single.word) loadSingle(state.single.word);
+  } else if (state.single.word) {
+    loadSingle(state.single.word);
+  }
 });
 els.primaryBtn.addEventListener('click', primaryAction);
 els.searchBtn.addEventListener('click', () => loadSingle(els.seedInput.value.trim() || randomWord([state.single.word])));
@@ -402,6 +500,8 @@ els.stopBtn.addEventListener('click', stopSession);
 els.focusBtn.addEventListener('click', enterFocus);
 els.exitFocusBtn.addEventListener('click', exitFocus);
 els.focusHandle.addEventListener('click', () => els.focusDock.classList.toggle('hidden'));
+els.dualSwapBtn.addEventListener('click', switchDualBank);
+
 document.addEventListener('fullscreenchange', () => {
   if (!document.fullscreenElement && state.focus) {
     state.focus = false;

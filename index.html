@@ -84,8 +84,8 @@
       </div>
     </section>
 
-    <section id="dualStage" class="dual-stage hidden" aria-live="polite">
-      <article class="lane-card active-lane" id="laneA">
+    <section id="dualStage" class="dual-stage hidden single-bank-view" aria-live="polite">
+      <article class="lane-card active-lane view-lane" id="laneA">
         <div class="lane-head">
           <div>
             <span class="lane-tag">LANE A</span>
@@ -117,6 +117,12 @@
         </div>
       </article>
     </section>
+
+    <button id="dualSwapBtn" class="dual-swap hidden" type="button" aria-label="Switch to the other rhyme bank">
+      <span id="dualSwapStatus" class="dual-swap-status">OTHER BANK</span>
+      <strong id="dualSwapWord">STANDBY</strong>
+      <span id="dualSwapTimer">+00:15</span>
+    </button>
 
     <div class="normal-actions setup-ui">
       <button id="holdBtn" class="utility-btn" disabled>HOLD</button>
