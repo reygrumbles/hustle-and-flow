@@ -1,17 +1,26 @@
-# Hustle & Flow v0.4
+# Hustle & Flow v0.5
 
 Mobile-first freestyle rhyme trainer.
 
-## v0.4 changes
-- START CYPHER and START DUAL CYPHER now enter Focus mode automatically
-- Dual Cypher shows one full rhyme bank at a time instead of stacking both banks
-- Lane B still enters exactly 15 seconds after Lane A
-- A stationary other-bank button stays on screen and shows the hidden word plus its live timer
-- Tap the other-bank button to flip instantly between rhyme banks without resetting either timer
-- If the hidden lane rotates to a new word, the switch button updates and pulses as NEW BANK
-- Each bank keeps its own independent scroll position while you flip between them
-- NEXT in Dual Cypher skips the currently visible lane
-- Both remains the default rhyme mode
-- Up to 1,000 perfect and 1,000 near rhyme results requested per seed word
+## Current build
 
-No database or user account required.
+- WRITE / RANDOM / CYPHER / DUAL CYPHER
+- 30 / 60 / 90 second cypher timing
+- Dual Cypher lane B starts at +15 seconds
+- Full-screen Focus mode starts automatically for timed modes
+- One full rhyme bank at a time in Dual, with pinned bank switching
+- Perfect / near / both rhyme banks (Both default)
+- Datamuse full-bank lookup (up to 1,000 per query type)
+- **One-tap microphone recording in Focus mode**
+- **Automatic offline vocal polish after STOP**
+  - high-pass cleanup
+  - mud reduction / presence / air EQ
+  - compression
+  - peak normalization + soft limiting
+  - conservative tonal pitch guard on stable pitched notes
+  - raw take preserved for A/B comparison
+  - polished WAV export
+
+## Recording note
+
+The pitch guard is intentionally conservative in this prototype: it corrects stable tonal sections while fast-changing speech/rap is left mostly untouched. This avoids forcing ordinary rap delivery onto musical notes.

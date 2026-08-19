@@ -28,6 +28,16 @@ const state = {
     offsetRemaining: 15,
     view: 'a',
     unseen: { a: false, b: false }
+  },
+  recording: {
+    mediaRecorder: null,
+    stream: null,
+    chunks: [],
+    startedAt: 0,
+    clockId: null,
+    rawUrl: '',
+    polishedUrl: '',
+    processing: false
   }
 };
 
@@ -60,7 +70,11 @@ const els = {
   dualSwapTimer: $('#dualSwapTimer'),
   holdBtn: $('#holdBtn'), nextBtn: $('#nextBtn'), stopBtn: $('#stopBtn'),
   focusHandle: $('#focusHandle'), focusDock: $('#focusDock'),
-  focusHoldBtn: $('#focusHoldBtn'), focusNextBtn: $('#focusNextBtn'), exitFocusBtn: $('#exitFocusBtn')
+  focusHoldBtn: $('#focusHoldBtn'), focusNextBtn: $('#focusNextBtn'), exitFocusBtn: $('#exitFocusBtn'),
+  recordBtn: $('#recordBtn'), recordBtnLabel: $('#recordBtnLabel'), recordClock: $('#recordClock'),
+  recordingTray: $('#recordingTray'), recordingStatus: $('#recordingStatus'), recordingDuration: $('#recordingDuration'),
+  processingNote: $('#processingNote'), recordingPlayers: $('#recordingPlayers'),
+  rawPlayer: $('#rawPlayer'), polishedPlayer: $('#polishedPlayer'), savePolished: $('#savePolished')
 };
 
 function formatTime(total) {
@@ -447,6 +461,7 @@ async function enterFocus() {
   state.focus = true;
   document.body.classList.add('focus-mode');
   els.focusHandle.classList.remove('hidden');
+  els.recordBtn.classList.remove('hidden');
   els.focusDock.classList.add('hidden');
   if (state.mode === 'dual') updateDualSwap();
 
@@ -461,11 +476,355 @@ async function exitFocus() {
   state.focus = false;
   document.body.classList.remove('focus-mode');
   els.focusHandle.classList.add('hidden');
+  els.recordBtn.classList.add('hidden');
   els.focusDock.classList.add('hidden');
 
   try {
     if (document.fullscreenElement && document.exitFullscreen) await document.exitFullscreen();
   } catch (_) {}
+}
+
+
+
+function revokeRecordingUrls() {
+  if (state.recording.rawUrl) URL.revokeObjectURL(state.recording.rawUrl);
+  if (state.recording.polishedUrl) URL.revokeObjectURL(state.recording.polishedUrl);
+  state.recording.rawUrl = '';
+  state.recording.polishedUrl = '';
+}
+
+function updateRecordClock() {
+  if (!state.recording.startedAt) {
+    els.recordClock.textContent = '00:00';
+    return;
+  }
+  const seconds = Math.floor((Date.now() - state.recording.startedAt) / 1000);
+  els.recordClock.textContent = formatTime(seconds);
+  els.recordingDuration.textContent = formatTime(seconds);
+}
+
+function setRecordingUi(mode, text = '') {
+  const recording = mode === 'recording';
+  const processing = mode === 'processing';
+  els.recordBtn.classList.toggle('is-recording', recording);
+  els.recordBtn.classList.toggle('is-processing', processing);
+  document.body.classList.toggle('recording-active', recording);
+  els.recordBtnLabel.textContent = recording ? 'STOP' : processing ? 'POLISH' : 'REC';
+  if (text) els.recordingStatus.textContent = text;
+}
+
+async function toggleRecording() {
+  if (state.recording.processing) return;
+  if (state.recording.mediaRecorder?.state === 'recording') {
+    stopRecording();
+  } else {
+    await startRecording();
+  }
+}
+
+async function startRecording() {
+  if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+    els.recordingTray.classList.remove('hidden');
+    els.recordingStatus.textContent = 'MIC NOT SUPPORTED';
+    els.processingNote.textContent = 'This browser cannot record microphone audio here.';
+    return;
+  }
+
+  try {
+    revokeRecordingUrls();
+    els.recordingPlayers.classList.add('hidden');
+    els.recordingTray.classList.remove('hidden');
+    els.processingNote.textContent = 'Recording raw vocal. When you stop, the take is processed automatically.';
+    els.recordingStatus.textContent = 'REQUESTING MIC';
+
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false,
+        channelCount: 1
+      }
+    });
+
+    const preferred = [
+      'audio/webm;codecs=opus',
+      'audio/webm',
+      'audio/mp4'
+    ].find(type => MediaRecorder.isTypeSupported?.(type));
+
+    const recorder = preferred ? new MediaRecorder(stream, { mimeType: preferred }) : new MediaRecorder(stream);
+    state.recording.stream = stream;
+    state.recording.mediaRecorder = recorder;
+    state.recording.chunks = [];
+
+    recorder.addEventListener('dataavailable', event => {
+      if (event.data?.size) state.recording.chunks.push(event.data);
+    });
+    recorder.addEventListener('stop', finishRecording, { once: true });
+
+    recorder.start(250);
+    state.recording.startedAt = Date.now();
+    clearInterval(state.recording.clockId);
+    state.recording.clockId = setInterval(updateRecordClock, 250);
+    updateRecordClock();
+    setRecordingUi('recording', 'RECORDING');
+  } catch (error) {
+    els.recordingTray.classList.remove('hidden');
+    els.recordingStatus.textContent = 'MIC BLOCKED';
+    els.processingNote.textContent = 'Microphone permission was not granted. Allow mic access and hit REC again.';
+    setRecordingUi('idle');
+  }
+}
+
+function stopRecording() {
+  const recorder = state.recording.mediaRecorder;
+  if (!recorder || recorder.state !== 'recording') return;
+  recorder.stop();
+  clearInterval(state.recording.clockId);
+  state.recording.clockId = null;
+  updateRecordClock();
+  setRecordingUi('processing', 'PROCESSING VOCAL');
+  state.recording.processing = true;
+}
+
+async function finishRecording() {
+  const recorder = state.recording.mediaRecorder;
+  const mime = recorder?.mimeType || 'audio/webm';
+  const rawBlob = new Blob(state.recording.chunks, { type: mime });
+
+  state.recording.stream?.getTracks().forEach(track => track.stop());
+  state.recording.stream = null;
+  state.recording.mediaRecorder = null;
+
+  state.recording.rawUrl = URL.createObjectURL(rawBlob);
+  els.rawPlayer.src = state.recording.rawUrl;
+  els.recordingPlayers.classList.add('hidden');
+  els.processingNote.textContent = 'Analyzing the full take: cleanup → tonal pitch guard → EQ → compression → level.';
+
+  try {
+    const polishedBlob = await polishVocal(rawBlob);
+    state.recording.polishedUrl = URL.createObjectURL(polishedBlob);
+    els.polishedPlayer.src = state.recording.polishedUrl;
+    els.savePolished.href = state.recording.polishedUrl;
+    els.recordingPlayers.classList.remove('hidden');
+    els.recordingStatus.textContent = 'POLISHED';
+    els.processingNote.textContent = 'RAW is untouched. POLISHED is the automatic vocal pass. Stable sung notes receive gentle pitch correction; speech/rap is left natural.';
+  } catch (error) {
+    console.error(error);
+    els.recordingPlayers.classList.remove('hidden');
+    els.polishedPlayer.removeAttribute('src');
+    els.savePolished.removeAttribute('href');
+    els.recordingStatus.textContent = 'RAW SAVED';
+    els.processingNote.textContent = 'The take recorded, but this browser could not finish the polish pass. Your raw vocal is still playable.';
+  } finally {
+    state.recording.processing = false;
+    state.recording.startedAt = 0;
+    els.recordClock.textContent = '00:00';
+    setRecordingUi('idle');
+  }
+}
+
+async function polishVocal(blob) {
+  const bytes = await blob.arrayBuffer();
+  const decodeCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const decoded = await decodeCtx.decodeAudioData(bytes.slice(0));
+  await decodeCtx.close().catch(() => {});
+
+  const sampleRate = decoded.sampleRate;
+  const mono = new Float32Array(decoded.length);
+  for (let c = 0; c < decoded.numberOfChannels; c++) {
+    const src = decoded.getChannelData(c);
+    for (let i = 0; i < mono.length; i++) mono[i] += src[i] / decoded.numberOfChannels;
+  }
+
+  const pitched = gentlePitchPolish(mono, sampleRate);
+  const inputBuffer = new AudioBuffer({ length: pitched.length, numberOfChannels: 1, sampleRate });
+  inputBuffer.copyToChannel(pitched, 0);
+
+  const offline = new OfflineAudioContext(1, inputBuffer.length, sampleRate);
+  const source = offline.createBufferSource();
+  source.buffer = inputBuffer;
+
+  const highpass = offline.createBiquadFilter();
+  highpass.type = 'highpass'; highpass.frequency.value = 78; highpass.Q.value = .7;
+
+  const mudCut = offline.createBiquadFilter();
+  mudCut.type = 'peaking'; mudCut.frequency.value = 230; mudCut.Q.value = .9; mudCut.gain.value = -2.2;
+
+  const presence = offline.createBiquadFilter();
+  presence.type = 'peaking'; presence.frequency.value = 3200; presence.Q.value = .8; presence.gain.value = 2.1;
+
+  const air = offline.createBiquadFilter();
+  air.type = 'highshelf'; air.frequency.value = 8500; air.gain.value = 1.25;
+
+  const compressor = offline.createDynamicsCompressor();
+  compressor.threshold.value = -22;
+  compressor.knee.value = 18;
+  compressor.ratio.value = 3.6;
+  compressor.attack.value = .006;
+  compressor.release.value = .14;
+
+  source.connect(highpass).connect(mudCut).connect(presence).connect(air).connect(compressor).connect(offline.destination);
+  source.start();
+  const rendered = await offline.startRendering();
+
+  const out = new Float32Array(rendered.length);
+  out.set(rendered.getChannelData(0));
+  normalizeAndSoftLimit(out, .94);
+  return encodeWav(out, sampleRate);
+}
+
+function normalizeAndSoftLimit(samples, targetPeak = .94) {
+  let peak = 0;
+  for (let i = 0; i < samples.length; i++) peak = Math.max(peak, Math.abs(samples[i]));
+  const gain = peak > 1e-5 ? Math.min(3.2, targetPeak / peak) : 1;
+  for (let i = 0; i < samples.length; i++) {
+    const x = samples[i] * gain;
+    samples[i] = Math.tanh(x * 1.08) / Math.tanh(1.08) * targetPeak;
+  }
+}
+
+function gentlePitchPolish(input, sampleRate) {
+  // Conservative granular pitch guard. It only acts on stable, tonal frames.
+  // Pitch is analyzed at a slower cadence to keep post-processing practical on phones.
+  const grain = sampleRate >= 44000 ? 2048 : 1024;
+  const hop = Math.floor(grain / 4);
+  const analysisSize = grain * 2;
+  const pitchHop = grain * 2;
+  const output = new Float32Array(input.length);
+  const weight = new Float32Array(input.length);
+  const pitchTrack = [];
+
+  for (let center = 0; center < input.length; center += pitchHop) {
+    pitchTrack.push(detectPitch(input, center, analysisSize, sampleRate));
+  }
+
+  let smoothCents = 0;
+  for (let outStart = 0; outStart < input.length; outStart += hop) {
+    const trackIndex = Math.min(pitchTrack.length - 1, Math.max(0, Math.round(outStart / pitchHop)));
+    const current = pitchTrack[trackIndex];
+    const prev = pitchTrack[trackIndex - 1];
+    const next = pitchTrack[trackIndex + 1];
+    let cents = 0;
+
+    if (current && prev && next && current.confidence > .72 && prev.confidence > .66 && next.confidence > .66) {
+      const spread = Math.max(
+        centsBetween(current.hz, prev.hz),
+        centsBetween(current.hz, next.hz),
+        centsBetween(prev.hz, next.hz)
+      );
+      if (spread < 95 && current.rms > .012) {
+        const midi = 69 + 12 * Math.log2(current.hz / 440);
+        cents = (Math.round(midi) - midi) * 100;
+        cents = Math.max(-62, Math.min(62, cents));
+      }
+    }
+
+    smoothCents = smoothCents * .78 + cents * .22;
+    const rate = Math.pow(2, smoothCents / 1200);
+    const half = grain / 2;
+
+    for (let i = 0; i < grain; i++) {
+      const dst = outStart + i;
+      if (dst >= input.length) break;
+      const centered = i - half;
+      const srcPos = outStart + half + centered * rate;
+      const sample = linearSample(input, srcPos);
+      const win = .5 - .5 * Math.cos((2 * Math.PI * i) / (grain - 1));
+      output[dst] += sample * win;
+      weight[dst] += win;
+    }
+  }
+
+  for (let i = 0; i < output.length; i++) {
+    output[i] = weight[i] > .0001 ? output[i] / weight[i] : input[i];
+  }
+  return output;
+}
+
+function centsBetween(a, b) {
+  return Math.abs(1200 * Math.log2(a / b));
+}
+
+function linearSample(samples, position) {
+  if (position <= 0) return samples[0] || 0;
+  if (position >= samples.length - 1) return samples[samples.length - 1] || 0;
+  const i = Math.floor(position);
+  const f = position - i;
+  return samples[i] * (1 - f) + samples[i + 1] * f;
+}
+
+function detectPitch(samples, center, size, sampleRate) {
+  const start = Math.max(0, Math.floor(center - size / 2));
+  const end = Math.min(samples.length, start + size);
+  if (end - start < size * .7) return null;
+
+  let mean = 0, rms = 0;
+  for (let i = start; i < end; i += 2) mean += samples[i];
+  mean /= Math.ceil((end - start) / 2);
+  for (let i = start; i < end; i += 2) {
+    const v = samples[i] - mean;
+    rms += v * v;
+  }
+  rms = Math.sqrt(rms / Math.ceil((end - start) / 2));
+  if (rms < .008) return null;
+
+  const minLag = Math.floor(sampleRate / 520);
+  const maxLag = Math.min(Math.floor(sampleRate / 78), Math.floor((end - start) / 2));
+  let coarseLag = 0, coarseBest = 0;
+
+  // Coarse scan: fewer lag candidates and fewer samples.
+  for (let lag = minLag; lag <= maxLag; lag += 3) {
+    let corr = 0, a2 = 0, b2 = 0;
+    const limit = end - lag;
+    for (let i = start; i < limit; i += 8) {
+      const a = samples[i] - mean;
+      const b = samples[i + lag] - mean;
+      corr += a * b; a2 += a * a; b2 += b * b;
+    }
+    const norm = corr / Math.sqrt((a2 * b2) + 1e-12);
+    if (norm > coarseBest) { coarseBest = norm; coarseLag = lag; }
+  }
+
+  if (!coarseLag || coarseBest < .48) return null;
+
+  // Refine only around the coarse winner.
+  let bestLag = coarseLag, best = coarseBest;
+  const refineStart = Math.max(minLag, coarseLag - 4);
+  const refineEnd = Math.min(maxLag, coarseLag + 4);
+  for (let lag = refineStart; lag <= refineEnd; lag++) {
+    let corr = 0, a2 = 0, b2 = 0;
+    const limit = end - lag;
+    for (let i = start; i < limit; i += 2) {
+      const a = samples[i] - mean;
+      const b = samples[i + lag] - mean;
+      corr += a * b; a2 += a * a; b2 += b * b;
+    }
+    const norm = corr / Math.sqrt((a2 * b2) + 1e-12);
+    if (norm > best) { best = norm; bestLag = lag; }
+  }
+
+  if (best < .55) return null;
+  return { hz: sampleRate / bestLag, confidence: best, rms };
+}
+
+function encodeWav(samples, sampleRate) {
+  const buffer = new ArrayBuffer(44 + samples.length * 2);
+  const view = new DataView(buffer);
+  const write = (offset, text) => { for (let i = 0; i < text.length; i++) view.setUint8(offset + i, text.charCodeAt(i)); };
+  write(0, 'RIFF');
+  view.setUint32(4, 36 + samples.length * 2, true);
+  write(8, 'WAVE'); write(12, 'fmt ');
+  view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true); view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true); view.setUint16(34, 16, true);
+  write(36, 'data'); view.setUint32(40, samples.length * 2, true);
+  let offset = 44;
+  for (let i = 0; i < samples.length; i++, offset += 2) {
+    const s = Math.max(-1, Math.min(1, samples[i]));
+    view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+  }
+  return new Blob([view], { type: 'audio/wav' });
 }
 
 els.modeSelect.value = state.mode;
@@ -501,12 +860,14 @@ els.focusBtn.addEventListener('click', enterFocus);
 els.exitFocusBtn.addEventListener('click', exitFocus);
 els.focusHandle.addEventListener('click', () => els.focusDock.classList.toggle('hidden'));
 els.dualSwapBtn.addEventListener('click', switchDualBank);
+els.recordBtn.addEventListener('click', toggleRecording);
 
 document.addEventListener('fullscreenchange', () => {
   if (!document.fullscreenElement && state.focus) {
     state.focus = false;
     document.body.classList.remove('focus-mode');
     els.focusHandle.classList.add('hidden');
+    els.recordBtn.classList.add('hidden');
     els.focusDock.classList.add('hidden');
   }
 });

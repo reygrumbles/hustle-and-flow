@@ -1,0 +1,1072 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0b0b" />
+  <meta name="description" content="Hustle & Flow — freestyle rhyme training." />
+  <title>Hustle & Flow</title>
+  <style>
+:root {
+  --ink: #080808;
+  --charcoal: #141310;
+  --panel: #171612;
+  --paper: #eee8dc;
+  --muted: #999186;
+  --orange: #e8661c;
+  --orange-dark: #8e300d;
+  --line: #3c3832;
+  font-family: Impact, Haettenschweiler, "Arial Narrow Bold", "Arial Black", sans-serif;
+  color: var(--paper);
+  background: var(--ink);
+}
+* { box-sizing: border-box; }
+html { background: var(--ink); min-height: 100%; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--paper);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(232,102,28,.12), transparent 34%),
+    linear-gradient(180deg, #151411 0%, #080808 54%, #11100d 100%);
+}
+button, input, select { font: inherit; }
+button, select { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; }
+.grain {
+  position: fixed; inset: 0; z-index: 50; pointer-events: none; opacity: .22;
+  background-image:
+    repeating-linear-gradient(8deg, rgba(255,255,255,.025) 0 1px, transparent 1px 5px),
+    repeating-linear-gradient(93deg, rgba(0,0,0,.3) 0 2px, transparent 2px 9px);
+  mix-blend-mode: overlay;
+}
+.app-shell {
+  width: min(100%, 820px);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: max(14px, env(safe-area-inset-top)) 14px max(22px, env(safe-area-inset-bottom));
+}
+.masthead { padding: 12px 0 15px; border-bottom: 4px solid #27231f; margin-bottom: 12px; }
+.masthead h1 {
+  margin: 0;
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  gap: 7px;
+  font-size: clamp(46px, 13vw, 86px);
+  line-height: .85;
+  letter-spacing: -.055em;
+  text-shadow: 3px 4px #000;
+}
+.masthead h1 b { font-size: .48em; color: #b8b0a4; transform: translateY(-4px) rotate(-8deg); }
+.masthead .flow { color: var(--orange); }
+.masthead p {
+  margin: 12px 0 0;
+  text-align: center;
+  font: 900 12px/1 Arial, sans-serif;
+  letter-spacing: .34em;
+  color: var(--muted);
+}
+.setup-panel {
+  border: 1px solid var(--line);
+  background: rgba(18,17,14,.92);
+  box-shadow: 10px 10px 0 rgba(0,0,0,.45), inset 0 1px rgba(255,255,255,.03);
+  padding: 10px;
+  margin-bottom: 12px;
+}
+.select-row { display: grid; grid-template-columns: 1.2fr .85fr 1fr; gap: 7px; }
+.select-box {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto auto;
+  min-width: 0;
+  border: 1px solid #454038;
+  background: #0e0e0c;
+  padding: 7px 8px 6px;
+}
+.select-box > span {
+  font: 800 8px/1 Arial, sans-serif;
+  letter-spacing: .18em;
+  color: #817a70;
+  margin-bottom: 3px;
+}
+.select-box select {
+  width: 100%; min-width: 0;
+  appearance: none;
+  border: 0; outline: 0;
+  background: transparent;
+  color: #e8e1d5;
+  font-size: 12px;
+  letter-spacing: .06em;
+  padding: 2px 18px 2px 0;
+}
+.select-box::after {
+  content: "⌄";
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  color: var(--orange);
+  font-size: 16px;
+  line-height: 1;
+  pointer-events: none;
+}
+.dual-note {
+  margin-top: 8px;
+  border-left: 3px solid var(--orange);
+  padding: 7px 8px;
+  background: rgba(232,102,28,.07);
+  font: 800 9px/1.2 Arial, sans-serif;
+  letter-spacing: .12em;
+  color: #8e877c;
+}
+.dual-note b { color: var(--orange); }
+.mode-controls { display: grid; grid-template-columns: 1fr auto; gap: 7px; margin-top: 8px; }
+input {
+  width: 100%; min-width: 0;
+  border: 1px solid #454038;
+  background: #070707;
+  color: #f3ede2;
+  outline: 0;
+  padding: 11px 12px;
+  text-transform: lowercase;
+}
+input:focus { border-color: var(--orange); }
+.session-actions { display: grid; grid-template-columns: 1fr auto; gap: 7px; margin-top: 8px; }
+.impact-btn, .utility-btn, .focus-dock button {
+  border: 1px solid #4a443c;
+  min-height: 42px;
+  letter-spacing: .09em;
+  color: #cfc7ba;
+  background: linear-gradient(#211f1b,#11110f);
+  box-shadow: 0 3px 0 #000, inset 0 1px rgba(255,255,255,.04);
+}
+.impact-btn {
+  border-color: #ff934f;
+  background: var(--orange);
+  color: #111;
+  box-shadow: 0 4px 0 var(--orange-dark), inset 0 -3px rgba(0,0,0,.14);
+  padding: 0 16px;
+}
+.impact-btn.wide { width: 100%; }
+.utility-btn { padding: 0 15px; }
+.utility-btn:disabled, .impact-btn:disabled { opacity: .35; cursor: default; }
+.utility-btn.danger:not(:disabled) { color: #f5d5c6; border-color: #73321f; background: #35170e; }
+.stage, .lane-card {
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.025), transparent 24%),
+    #13120f;
+  box-shadow: 8px 10px 0 rgba(0,0,0,.38);
+}
+.single-stage { margin-bottom: 10px; }
+.word-bar, .lane-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px 9px;
+  border-bottom: 3px solid var(--orange);
+  background: linear-gradient(90deg, #e2dccf 0%, #d6d0c3 72%, #c8c1b3 100%);
+  color: #111;
+}
+.word-bar > div:first-child, .lane-head > div:first-child { min-width: 0; }
+.lane-tag {
+  display: block;
+  font: 900 8px/1 Arial, sans-serif;
+  letter-spacing: .2em;
+  color: #6e665d;
+  margin-bottom: 3px;
+}
+.word-bar strong, .lane-head strong {
+  display: block;
+  font-size: clamp(28px, 9vw, 52px);
+  line-height: .9;
+  letter-spacing: -.025em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+.word-meta { flex: 0 0 auto; display: grid; text-align: right; gap: 4px; }
+.timer { color: #a73716; font-size: 20px; line-height: 1; }
+.count { font: 900 8px/1 Arial, sans-serif; letter-spacing: .12em; color: #756e65; }
+.bank-head {
+  display: flex; align-items: end; justify-content: space-between; gap: 10px;
+  padding: 11px 12px 7px;
+}
+.bank-head h2 { margin: 0; font-size: 25px; letter-spacing: .02em; }
+.bank-head span { font: 800 9px/1.2 Arial, sans-serif; color: #8e877c; text-align: right; }
+.rhyme-bank { padding: 0 10px 12px; }
+.rhyme-group + .rhyme-group { margin-top: 12px; }
+.group-head {
+  display: flex; justify-content: space-between; align-items: center;
+  border-bottom: 1px solid #38342e;
+  padding: 0 2px 5px;
+  font: 900 9px/1 Arial, sans-serif;
+  letter-spacing: .13em;
+  color: var(--orange);
+}
+.rhyme-group.near .group-head { color: #aaa296; }
+.word-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-left: 1px solid #39352f;
+}
+.rhyme-word {
+  min-width: 0;
+  border: 0;
+  border-right: 1px solid #39352f;
+  border-bottom: 1px solid #39352f;
+  border-left: 4px solid var(--orange);
+  background: rgba(221,215,200,.045);
+  color: #e8e1d5;
+  padding: 9px 7px;
+  font: 800 12px/1.15 Arial, sans-serif;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.rhyme-group.near .rhyme-word { border-left-color: #6f685f; color: #b3aca1; background: rgba(255,255,255,.018); }
+.rhyme-word:active { background: var(--orange); color: #111; }
+.empty-copy { padding: 18px 3px; color: #766f65; font: 800 11px/1.4 Arial, sans-serif; letter-spacing: .05em; }
+.dual-stage { display: grid; gap: 10px; margin-bottom: 10px; }
+.lane-card { min-height: 200px; overflow: hidden; }
+.lane-card .lane-head { border-bottom-color: #5d574e; }
+.lane-card.active-lane .lane-head { border-bottom-color: var(--orange); }
+.lane-card.active-lane { box-shadow: 8px 10px 0 rgba(0,0,0,.38), inset 4px 0 var(--orange); }
+.lane-card.waiting { opacity: .62; }
+.compact-bank { padding-top: 8px; }
+.normal-actions { display: grid; grid-template-columns: repeat(3,1fr); gap: 7px; margin-top: 10px; }
+footer {
+  display: flex; justify-content: space-between; gap: 8px;
+  padding: 15px 2px 0;
+  font: 800 8px/1 Arial, sans-serif;
+  letter-spacing: .14em;
+  color: #59534b;
+}
+.hidden { display: none !important; }
+
+/* Focus mode: the bank becomes the app. */
+body.focus-mode { overflow: hidden; background: #090909; }
+body.focus-mode .setup-ui { display: none !important; }
+body.focus-mode .app-shell {
+  width: 100%; max-width: none; height: 100vh; min-height: 0;
+  padding: max(4px, env(safe-area-inset-top)) 4px max(4px, env(safe-area-inset-bottom));
+}
+body.focus-mode .single-stage {
+  height: calc(100vh - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom)));
+  margin: 0; box-shadow: none; border-color: #27241f;
+  display: flex; flex-direction: column;
+}
+body.focus-mode .word-bar {
+  position: sticky; top: 0; z-index: 5;
+  padding: 6px 9px;
+  min-height: 54px;
+}
+body.focus-mode .word-bar strong { font-size: clamp(24px, 7vw, 40px); }
+body.focus-mode .bank-head { padding: 6px 9px 4px; }
+body.focus-mode .bank-head h2 { font-size: 17px; }
+body.focus-mode .rhyme-bank { flex: 1; min-height: 0; overflow-y: auto; padding: 0 5px 8px; }
+body.focus-mode .word-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
+body.focus-mode .rhyme-word { padding: 8px 6px; font-size: 12px; }
+body.focus-mode .dual-stage {
+  height: calc(100vh - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom)));
+  display: grid; grid-template-rows: 1fr 1fr; gap: 4px; margin: 0;
+}
+body.focus-mode .lane-card { min-height: 0; display: flex; flex-direction: column; box-shadow: none; }
+body.focus-mode .lane-head { min-height: 48px; padding: 6px 9px; position: sticky; top: 0; z-index: 5; }
+body.focus-mode .lane-head strong { font-size: clamp(22px, 6vw, 34px); }
+body.focus-mode .lane-card .rhyme-bank { flex: 1; min-height: 0; overflow-y: auto; padding: 5px; }
+body.focus-mode .lane-card .word-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
+body.focus-mode .lane-card .rhyme-word { padding: 7px 5px; font-size: 11px; }
+.focus-handle {
+  position: fixed;
+  z-index: 100;
+  right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  width: 44px; height: 36px;
+  border: 1px solid #5a5045;
+  background: rgba(12,12,11,.88);
+  color: var(--orange);
+  box-shadow: 0 4px 12px #000;
+  letter-spacing: .12em;
+}
+.focus-dock {
+  position: fixed;
+  z-index: 101;
+  right: 12px;
+  bottom: calc(56px + env(safe-area-inset-bottom));
+  display: grid;
+  width: 118px;
+  padding: 5px;
+  gap: 5px;
+  border: 1px solid #4c463e;
+  background: rgba(8,8,8,.96);
+  box-shadow: 0 10px 28px #000;
+}
+.focus-dock button { min-height: 36px; font-size: 10px; }
+.focus-dock button:first-child { color: var(--orange); }
+
+@media (max-width: 390px) {
+  .select-row { grid-template-columns: 1.25fr .82fr 1fr; gap: 5px; }
+  .select-box { padding-inline: 6px; }
+  .select-box select { font-size: 10px; }
+  .word-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .rhyme-word { font-size: 11px; padding: 8px 5px; }
+}
+
+/* v0.4 — Dual Cypher bank flipping */
+.dual-stage.single-bank-view .lane-card.offscreen-lane { display: none; }
+.dual-stage.single-bank-view .lane-card.view-lane { display: flex; flex-direction: column; }
+
+.dual-swap {
+  position: fixed;
+  z-index: 96;
+  left: max(10px, env(safe-area-inset-left));
+  right: 70px;
+  bottom: calc(10px + env(safe-area-inset-bottom));
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid #6a5d4e;
+  border-left: 5px solid var(--orange);
+  padding: 7px 10px 7px 9px;
+  background: rgba(13, 12, 10, .96);
+  color: #eee7db;
+  box-shadow: 0 8px 24px rgba(0,0,0,.72), inset 0 1px rgba(255,255,255,.04);
+  text-align: left;
+}
+.dual-swap:disabled {
+  opacity: .72;
+  border-left-color: #605a52;
+}
+.dual-swap-status {
+  font: 900 8px/1 Arial, sans-serif;
+  letter-spacing: .14em;
+  color: #8e877c;
+  white-space: nowrap;
+}
+.dual-swap strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: clamp(18px, 5.8vw, 30px);
+  line-height: 1;
+  color: var(--paper);
+  text-transform: uppercase;
+}
+.dual-swap > span:last-child {
+  font-size: 15px;
+  color: var(--orange);
+  white-space: nowrap;
+}
+.dual-swap.has-new {
+  border-color: #b74b19;
+  border-left-color: #ff762a;
+  animation: bankPulse 1.1s ease-in-out infinite;
+}
+.dual-swap.has-new .dual-swap-status,
+.dual-swap.has-new strong { color: #fff2e8; }
+@keyframes bankPulse {
+  0%, 100% { box-shadow: 0 8px 24px rgba(0,0,0,.72), inset 0 1px rgba(255,255,255,.04); }
+  50% { box-shadow: 0 8px 26px rgba(232,102,28,.32), 0 0 0 1px rgba(232,102,28,.3); }
+}
+
+body:not(.focus-mode) .dual-stage.single-bank-view {
+  display: block;
+  margin-bottom: 68px;
+}
+body:not(.focus-mode) .dual-stage.single-bank-view .lane-card.view-lane {
+  min-height: 420px;
+}
+
+body.focus-mode .dual-stage {
+  height: calc(100vh - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom)));
+  display: block;
+  margin: 0;
+}
+body.focus-mode .dual-stage .lane-card.offscreen-lane { display: none !important; }
+body.focus-mode .dual-stage .lane-card.view-lane {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  box-shadow: none;
+}
+body.focus-mode .dual-stage .lane-card.view-lane .rhyme-bank {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 5px 5px 72px;
+  overscroll-behavior: contain;
+}
+body.focus-mode .dual-swap {
+  bottom: calc(8px + env(safe-area-inset-bottom));
+  min-height: 46px;
+  background: rgba(10,10,9,.94);
+}
+body.focus-mode .focus-handle {
+  right: 10px;
+  bottom: calc(10px + env(safe-area-inset-bottom));
+}
+body.focus-mode .focus-dock {
+  right: 10px;
+  bottom: calc(58px + env(safe-area-inset-bottom));
+}
+
+@media (max-width: 390px) {
+  .dual-swap { right: 62px; gap: 6px; padding-inline: 7px; }
+  .dual-swap-status { font-size: 7px; }
+  .dual-swap > span:last-child { font-size: 13px; }
+}
+
+</style>
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+
+  <main class="app-shell">
+    <header class="masthead setup-ui">
+      <h1><span>HUSTLE</span><b>&amp;</b><span class="flow">FLOW</span></h1>
+      <p>FREESTYLE RHYME TRAINER</p>
+    </header>
+
+    <section class="setup-panel setup-ui" aria-label="Session setup">
+      <div class="select-row">
+        <label class="select-box">
+          <span>MODE</span>
+          <select id="modeSelect" aria-label="Mode">
+            <option value="search">WRITE</option>
+            <option value="random">RANDOM</option>
+            <option value="cypher" selected>CYPHER</option>
+            <option value="dual">DUAL CYPHER</option>
+          </select>
+        </label>
+
+        <label class="select-box" id="timeSelectBox">
+          <span>TIME</span>
+          <select id="timeSelect" aria-label="Timer">
+            <option value="30" selected>30 SEC</option>
+            <option value="60">60 SEC</option>
+            <option value="90">90 SEC</option>
+          </select>
+        </label>
+
+        <label class="select-box">
+          <span>RHYMES</span>
+          <select id="rhymeSelect" aria-label="Rhyme type">
+            <option value="both" selected>BOTH</option>
+            <option value="perfect">PERFECT</option>
+            <option value="near">NEAR</option>
+          </select>
+        </label>
+      </div>
+
+      <div id="dualNote" class="dual-note hidden">LANE B ENTERS <b>15 SEC</b> AFTER LANE A</div>
+
+      <div id="writeControls" class="mode-controls hidden">
+        <input id="seedInput" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="40" placeholder="drop a word" />
+        <button id="searchBtn" class="impact-btn">RUN IT</button>
+      </div>
+
+      <div class="session-actions">
+        <button id="primaryBtn" class="impact-btn wide">START CYPHER</button>
+        <button id="focusBtn" class="utility-btn" disabled>FOCUS</button>
+      </div>
+    </section>
+
+    <section id="singleStage" class="stage single-stage" aria-live="polite">
+      <div class="word-bar">
+        <div>
+          <span class="lane-tag">CURRENT WORD</span>
+          <strong id="singleWord">GAME</strong>
+        </div>
+        <div class="word-meta">
+          <span id="singleTimer" class="timer">00:30</span>
+          <span id="singleCount" class="count">0 WORDS</span>
+        </div>
+      </div>
+
+      <div class="bank-head">
+        <h2>RHYME BANK</h2>
+        <span id="singleBreakdown">READY</span>
+      </div>
+      <div id="singleBank" class="rhyme-bank">
+        <div class="empty-copy">Set the mode. Start the session. Run the bank.</div>
+      </div>
+    </section>
+
+    <section id="dualStage" class="dual-stage hidden" aria-live="polite">
+      <article class="lane-card active-lane" id="laneA">
+        <div class="lane-head">
+          <div>
+            <span class="lane-tag">LANE A</span>
+            <strong id="wordA">READY</strong>
+          </div>
+          <div class="word-meta">
+            <span id="timerA" class="timer">00:30</span>
+            <span id="countA" class="count">0 WORDS</span>
+          </div>
+        </div>
+        <div id="bankA" class="rhyme-bank compact-bank">
+          <div class="empty-copy">Lane A starts immediately.</div>
+        </div>
+      </article>
+
+      <article class="lane-card waiting" id="laneB">
+        <div class="lane-head">
+          <div>
+            <span class="lane-tag">LANE B // +15 SEC</span>
+            <strong id="wordB">STANDBY</strong>
+          </div>
+          <div class="word-meta">
+            <span id="timerB" class="timer">+00:15</span>
+            <span id="countB" class="count">0 WORDS</span>
+          </div>
+        </div>
+        <div id="bankB" class="rhyme-bank compact-bank">
+          <div class="empty-copy">Second rhyme bank enters after the offset.</div>
+        </div>
+      </article>
+    </section>
+
+    <div class="normal-actions setup-ui">
+      <button id="holdBtn" class="utility-btn" disabled>HOLD</button>
+      <button id="nextBtn" class="utility-btn" disabled>NEXT</button>
+      <button id="stopBtn" class="utility-btn danger" disabled>STOP</button>
+    </div>
+
+    <footer class="setup-ui">
+      <span>H&amp;F // SESSION MODE</span>
+      <span>DATAMUSE RHYME BANK</span>
+    </footer>
+  </main>
+
+  <button id="focusHandle" class="focus-handle hidden" aria-label="Show focus controls">•••</button>
+  <div id="focusDock" class="focus-dock hidden">
+    <button id="focusHoldBtn">HOLD</button>
+    <button id="focusNextBtn">NEXT</button>
+    <button id="exitFocusBtn">EXIT</button>
+  </div>
+
+  <script>
+const $ = (sel) => document.querySelector(sel);
+
+const WORDS = [
+  'pressure','concrete','vision','hustle','shadow','machine','freedom','city','danger','money',
+  'rhythm','family','power','corner','future','battle','mirror','night','street','fire','silence',
+  'broken','gold','motion','truth','memory','system','summer','winter','focus','energy','legacy',
+  'gravity','respect','change','dream','signal','champion','storm','heart','time','loyalty','noise',
+  'diamond','reason','moment','control','culture','vintage','hunger','midnight','victory','story',
+  'game','flame','kingdom','damage','honor','grind','soul'
+];
+
+const savedRhyme = localStorage.getItem('hf-rhyme-type');
+const savedSeconds = Number(localStorage.getItem('hf-seconds'));
+
+const state = {
+  mode: 'cypher',
+  rhymeType: ['both','perfect','near'].includes(savedRhyme) ? savedRhyme : 'both',
+  seconds: [30,60,90].includes(savedSeconds) ? savedSeconds : 30,
+  running: false,
+  held: false,
+  focus: false,
+  timerId: null,
+  single: { word: '', remaining: 30, request: 0 },
+  dual: {
+    a: { word: '', remaining: 30, request: 0 },
+    b: { word: '', remaining: 30, request: 0 },
+    bStarted: false,
+    offsetRemaining: 15,
+    view: 'a',
+    unseen: { a: false, b: false }
+  }
+};
+
+const els = {
+  modeSelect: $('#modeSelect'),
+  timeSelect: $('#timeSelect'),
+  rhymeSelect: $('#rhymeSelect'),
+  timeSelectBox: $('#timeSelectBox'),
+  dualNote: $('#dualNote'),
+  writeControls: $('#writeControls'),
+  seedInput: $('#seedInput'),
+  searchBtn: $('#searchBtn'),
+  primaryBtn: $('#primaryBtn'),
+  focusBtn: $('#focusBtn'),
+  singleStage: $('#singleStage'),
+  singleWord: $('#singleWord'),
+  singleTimer: $('#singleTimer'),
+  singleCount: $('#singleCount'),
+  singleBreakdown: $('#singleBreakdown'),
+  singleBank: $('#singleBank'),
+  dualStage: $('#dualStage'),
+  laneA: $('#laneA'), laneB: $('#laneB'),
+  wordA: $('#wordA'), wordB: $('#wordB'),
+  timerA: $('#timerA'), timerB: $('#timerB'),
+  countA: $('#countA'), countB: $('#countB'),
+  bankA: $('#bankA'), bankB: $('#bankB'),
+  dualSwapBtn: $('#dualSwapBtn'),
+  dualSwapStatus: $('#dualSwapStatus'),
+  dualSwapWord: $('#dualSwapWord'),
+  dualSwapTimer: $('#dualSwapTimer'),
+  holdBtn: $('#holdBtn'), nextBtn: $('#nextBtn'), stopBtn: $('#stopBtn'),
+  focusHandle: $('#focusHandle'), focusDock: $('#focusDock'),
+  focusHoldBtn: $('#focusHoldBtn'), focusNextBtn: $('#focusNextBtn'), exitFocusBtn: $('#exitFocusBtn')
+};
+
+function formatTime(total) {
+  const safe = Math.max(0, Number(total) || 0);
+  const minutes = Math.floor(safe / 60);
+  const seconds = safe % 60;
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function randomWord(exclude = []) {
+  const blocked = new Set(exclude.filter(Boolean).map(w => w.toLowerCase()));
+  const pool = WORDS.filter(w => !blocked.has(w.toLowerCase()));
+  return pool[Math.floor(Math.random() * pool.length)] || WORDS[0];
+}
+
+function setMode(mode) {
+  stopSession();
+  state.mode = mode;
+  els.modeSelect.value = mode;
+  const timed = mode === 'cypher' || mode === 'dual';
+  els.timeSelectBox.classList.toggle('hidden', !timed);
+  els.dualNote.classList.toggle('hidden', mode !== 'dual');
+  els.writeControls.classList.toggle('hidden', mode !== 'search');
+  els.singleStage.classList.toggle('hidden', mode === 'dual');
+  els.dualStage.classList.toggle('hidden', mode !== 'dual');
+  els.dualSwapBtn.classList.add('hidden');
+
+  if (mode === 'search') els.primaryBtn.textContent = 'RUN WORD';
+  if (mode === 'random') els.primaryBtn.textContent = 'THROW A WORD';
+  if (mode === 'cypher') els.primaryBtn.textContent = 'START CYPHER';
+  if (mode === 'dual') {
+    els.primaryBtn.textContent = 'START DUAL CYPHER';
+    setViewedLane('a');
+  }
+
+  resetStageCopy();
+}
+
+function resetStageCopy() {
+  if (state.mode !== 'dual') {
+    els.singleTimer.textContent = state.mode === 'cypher' ? formatTime(state.seconds) : '—';
+    els.singleBreakdown.textContent = 'READY';
+  } else {
+    els.timerA.textContent = formatTime(state.seconds);
+    els.timerB.textContent = '+00:15';
+    updateDualSwap();
+  }
+}
+
+async function getRhymes(word) {
+  const encoded = encodeURIComponent(word);
+  const perfectUrl = `https://api.datamuse.com/words?rel_rhy=${encoded}&md=sp&max=1000`;
+  const nearUrl = `https://api.datamuse.com/words?rel_nry=${encoded}&md=sp&max=1000`;
+  const perfectPromise = state.rhymeType === 'near'
+    ? Promise.resolve([])
+    : fetch(perfectUrl).then(r => r.ok ? r.json() : Promise.reject(r.status));
+  const nearPromise = state.rhymeType === 'perfect'
+    ? Promise.resolve([])
+    : fetch(nearUrl).then(r => r.ok ? r.json() : Promise.reject(r.status));
+  const [perfectRaw, nearRaw] = await Promise.all([perfectPromise, nearPromise]);
+
+  const used = new Set([word.toLowerCase()]);
+  const clean = (items, kind) => items.reduce((out, item) => {
+    const key = item.word.toLowerCase();
+    if (!used.has(key)) {
+      used.add(key);
+      out.push({ word: item.word, kind });
+    }
+    return out;
+  }, []);
+
+  return { perfect: clean(perfectRaw, 'perfect'), near: clean(nearRaw, 'near') };
+}
+
+function bankMarkup(perfect, near) {
+  const group = (label, items, kind) => {
+    if (!items.length) return '';
+    return `<section class="rhyme-group ${kind}">
+      <div class="group-head"><span>${label}</span><b>${items.length}</b></div>
+      <div class="word-grid">${items.map(item => `<button class="rhyme-word" data-copy="${escapeAttr(item.word)}">${escapeHtml(item.word)}</button>`).join('')}</div>
+    </section>`;
+  };
+  return group('PERFECT', perfect, 'perfect') + group('NEAR', near, 'near');
+}
+
+function escapeHtml(text) {
+  return text.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+}
+function escapeAttr(text) { return escapeHtml(text); }
+
+function wireCopy(container) {
+  container.querySelectorAll('[data-copy]').forEach(btn => btn.addEventListener('click', () => {
+    navigator.clipboard?.writeText(btn.dataset.copy).catch(() => {});
+  }));
+}
+
+async function loadSingle(word) {
+  const clean = word.trim().toLowerCase();
+  if (!clean) return;
+  state.single.word = clean;
+  const req = ++state.single.request;
+  els.singleWord.textContent = clean;
+  els.singleBreakdown.textContent = 'LOADING';
+  els.singleBank.innerHTML = '<div class="empty-copy">Loading the full rhyme bank…</div>';
+
+  try {
+    const { perfect, near } = await getRhymes(clean);
+    if (req !== state.single.request) return;
+    const total = perfect.length + near.length;
+    els.singleCount.textContent = `${total} WORD${total === 1 ? '' : 'S'}`;
+    els.singleBreakdown.textContent = `${perfect.length} PERFECT • ${near.length} NEAR`;
+    els.singleBank.innerHTML = total ? bankMarkup(perfect, near) : '<div class="empty-copy">No rhymes found. Hit NEXT.</div>';
+    wireCopy(els.singleBank);
+    els.focusBtn.disabled = false;
+    els.nextBtn.disabled = false;
+  } catch {
+    if (req !== state.single.request) return;
+    els.singleCount.textContent = '0 WORDS';
+    els.singleBreakdown.textContent = 'CONNECTION MISS';
+    els.singleBank.innerHTML = '<div class="empty-copy">Could not reach the rhyme service. Hit NEXT or try again.</div>';
+  }
+}
+
+function laneEls(which) {
+  return which === 'a'
+    ? { word: els.wordA, count: els.countA, bank: els.bankA, card: els.laneA }
+    : { word: els.wordB, count: els.countB, bank: els.bankB, card: els.laneB };
+}
+
+function markLaneUpdated(which) {
+  if (state.dual.view !== which) state.dual.unseen[which] = true;
+  updateDualSwap();
+}
+
+async function loadLane(which, word) {
+  const lane = state.dual[which];
+  const clean = word.trim().toLowerCase();
+  lane.word = clean;
+  const req = ++lane.request;
+  const view = laneEls(which);
+
+  view.word.textContent = clean;
+  view.card.classList.remove('waiting');
+  view.bank.innerHTML = '<div class="empty-copy">Loading rhyme bank…</div>';
+  markLaneUpdated(which);
+
+  try {
+    const { perfect, near } = await getRhymes(clean);
+    if (req !== lane.request) return;
+    const total = perfect.length + near.length;
+    view.count.textContent = `${total} WORD${total === 1 ? '' : 'S'}`;
+    view.bank.innerHTML = total ? bankMarkup(perfect, near) : '<div class="empty-copy">No rhymes found. Rotate the lane.</div>';
+    wireCopy(view.bank);
+    els.focusBtn.disabled = false;
+    els.nextBtn.disabled = false;
+    updateDualSwap();
+  } catch {
+    if (req !== lane.request) return;
+    view.count.textContent = '0 WORDS';
+    view.bank.innerHTML = '<div class="empty-copy">Connection miss. This lane will retry on the next word.</div>';
+    updateDualSwap();
+  }
+}
+
+function setViewedLane(which) {
+  if (which === 'b' && !state.dual.bStarted) return;
+  state.dual.view = which;
+  state.dual.unseen[which] = false;
+  els.laneA.classList.toggle('view-lane', which === 'a');
+  els.laneB.classList.toggle('view-lane', which === 'b');
+  els.laneA.classList.toggle('offscreen-lane', which !== 'a');
+  els.laneB.classList.toggle('offscreen-lane', which !== 'b');
+  els.laneA.classList.toggle('active-lane', which === 'a');
+  els.laneB.classList.toggle('active-lane', which === 'b');
+  updateDualSwap();
+}
+
+function updateDualSwap() {
+  if (state.mode !== 'dual' || !state.running) {
+    els.dualSwapBtn.classList.add('hidden');
+    return;
+  }
+
+  const other = state.dual.view === 'a' ? 'b' : 'a';
+  const lane = state.dual[other];
+  const waitingForB = other === 'b' && !state.dual.bStarted;
+
+  els.dualSwapBtn.classList.remove('hidden');
+  els.dualSwapBtn.disabled = waitingForB;
+  els.dualSwapBtn.dataset.target = other;
+  els.dualSwapBtn.classList.toggle('has-new', !waitingForB && state.dual.unseen[other]);
+
+  if (waitingForB) {
+    els.dualSwapStatus.textContent = 'ENTERS IN';
+    els.dualSwapWord.textContent = 'LANE B';
+    els.dualSwapTimer.textContent = `+${formatTime(state.dual.offsetRemaining)}`;
+    return;
+  }
+
+  els.dualSwapStatus.textContent = state.dual.unseen[other] ? 'NEW BANK' : 'OTHER BANK';
+  els.dualSwapWord.textContent = lane.word || (other === 'a' ? 'LANE A' : 'LANE B');
+  els.dualSwapTimer.textContent = formatTime(lane.remaining);
+}
+
+function switchDualBank() {
+  if (state.mode !== 'dual' || !state.running) return;
+  const target = state.dual.view === 'a' ? 'b' : 'a';
+  if (target === 'b' && !state.dual.bStarted) return;
+  setViewedLane(target);
+  els.focusDock.classList.add('hidden');
+}
+
+function startSingleCypher() {
+  stopTimerOnly();
+  state.running = true;
+  state.held = false;
+  state.single.remaining = state.seconds;
+  updateSingleTimer();
+  loadSingle(randomWord([state.single.word]));
+  updateControls();
+  els.primaryBtn.textContent = 'RESTART CYPHER';
+
+  state.timerId = setInterval(() => {
+    if (!state.running || state.held) return;
+    state.single.remaining -= 1;
+    if (state.single.remaining <= 0) {
+      state.single.remaining = state.seconds;
+      loadSingle(randomWord([state.single.word]));
+    }
+    updateSingleTimer();
+  }, 1000);
+}
+
+function startDual() {
+  stopTimerOnly();
+  state.running = true;
+  state.held = false;
+  state.dual.a.remaining = state.seconds;
+  state.dual.b.remaining = state.seconds;
+  state.dual.bStarted = false;
+  state.dual.offsetRemaining = 15;
+  state.dual.unseen = { a: false, b: false };
+
+  els.wordB.textContent = 'STANDBY';
+  els.countB.textContent = '0 WORDS';
+  els.bankB.innerHTML = '<div class="empty-copy">Lane B enters 15 seconds after Lane A.</div>';
+  els.laneB.classList.add('waiting');
+
+  state.dual.view = 'a';
+  els.laneA.classList.add('view-lane', 'active-lane');
+  els.laneA.classList.remove('offscreen-lane');
+  els.laneB.classList.remove('view-lane', 'active-lane');
+  els.laneB.classList.add('offscreen-lane');
+
+  loadLane('a', randomWord([state.dual.a.word, state.dual.b.word]));
+  updateDualTimers();
+  updateControls();
+  updateDualSwap();
+  els.primaryBtn.textContent = 'RESTART DUAL';
+
+  state.timerId = setInterval(() => {
+    if (!state.running || state.held) return;
+
+    state.dual.a.remaining -= 1;
+    if (state.dual.a.remaining <= 0) {
+      state.dual.a.remaining = state.seconds;
+      loadLane('a', randomWord([state.dual.a.word, state.dual.b.word]));
+    }
+
+    if (!state.dual.bStarted) {
+      state.dual.offsetRemaining -= 1;
+      if (state.dual.offsetRemaining <= 0) {
+        state.dual.bStarted = true;
+        state.dual.b.remaining = state.seconds;
+        loadLane('b', randomWord([state.dual.a.word, state.dual.b.word]));
+      }
+    } else {
+      state.dual.b.remaining -= 1;
+      if (state.dual.b.remaining <= 0) {
+        state.dual.b.remaining = state.seconds;
+        loadLane('b', randomWord([state.dual.a.word, state.dual.b.word]));
+      }
+    }
+
+    updateDualTimers();
+    updateDualSwap();
+  }, 1000);
+}
+
+function updateSingleTimer() {
+  els.singleTimer.textContent = formatTime(state.single.remaining);
+}
+
+function updateDualTimers() {
+  els.timerA.textContent = formatTime(state.dual.a.remaining);
+  els.timerB.textContent = state.dual.bStarted
+    ? formatTime(state.dual.b.remaining)
+    : `+${formatTime(state.dual.offsetRemaining)}`;
+}
+
+function stopTimerOnly() {
+  if (state.timerId) clearInterval(state.timerId);
+  state.timerId = null;
+}
+
+function stopSession() {
+  stopTimerOnly();
+  state.running = false;
+  state.held = false;
+  state.single.remaining = state.seconds;
+  state.dual.a.remaining = state.seconds;
+  state.dual.b.remaining = state.seconds;
+  state.dual.offsetRemaining = 15;
+  state.dual.bStarted = false;
+  state.dual.unseen = { a: false, b: false };
+  els.dualSwapBtn.classList.add('hidden');
+  updateControls();
+  resetStageCopy();
+  if (state.mode === 'cypher') els.primaryBtn.textContent = 'START CYPHER';
+  if (state.mode === 'dual') els.primaryBtn.textContent = 'START DUAL CYPHER';
+}
+
+function updateControls() {
+  const timed = state.mode === 'cypher' || state.mode === 'dual';
+  els.holdBtn.disabled = !state.running || !timed;
+  els.focusHoldBtn.classList.toggle('hidden', !timed);
+  els.nextBtn.disabled = state.mode === 'search' ? !state.single.word : false;
+  els.stopBtn.disabled = !state.running;
+  const label = state.held ? 'RELEASE' : 'HOLD';
+  els.holdBtn.textContent = label;
+  els.focusHoldBtn.textContent = label;
+}
+
+function toggleHold() {
+  if (!state.running) return;
+  state.held = !state.held;
+  updateControls();
+}
+
+function nextNow() {
+  if (state.mode === 'search') {
+    const word = els.seedInput.value.trim() || randomWord([state.single.word]);
+    loadSingle(word);
+    return;
+  }
+
+  if (state.mode === 'random') {
+    loadSingle(randomWord([state.single.word]));
+    return;
+  }
+
+  if (state.mode === 'cypher') {
+    state.single.remaining = state.seconds;
+    updateSingleTimer();
+    loadSingle(randomWord([state.single.word]));
+    return;
+  }
+
+  if (state.mode === 'dual') {
+    const which = state.dual.view;
+    state.dual[which].remaining = state.seconds;
+    loadLane(which, randomWord([state.dual.a.word, state.dual.b.word]));
+    updateDualTimers();
+    updateDualSwap();
+  }
+}
+
+function primaryAction() {
+  if (state.mode === 'search') {
+    loadSingle(els.seedInput.value.trim() || randomWord([state.single.word]));
+  } else if (state.mode === 'random') {
+    loadSingle(randomWord([state.single.word]));
+  } else if (state.mode === 'cypher') {
+    startSingleCypher();
+    enterFocus();
+  } else {
+    startDual();
+    enterFocus();
+  }
+}
+
+async function enterFocus() {
+  if (els.focusBtn.disabled && !state.running) return;
+  state.focus = true;
+  document.body.classList.add('focus-mode');
+  els.focusHandle.classList.remove('hidden');
+  els.focusDock.classList.add('hidden');
+  if (state.mode === 'dual') updateDualSwap();
+
+  try {
+    if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+      await document.documentElement.requestFullscreen({ navigationUI: 'hide' });
+    }
+  } catch (_) {}
+}
+
+async function exitFocus() {
+  state.focus = false;
+  document.body.classList.remove('focus-mode');
+  els.focusHandle.classList.add('hidden');
+  els.focusDock.classList.add('hidden');
+
+  try {
+    if (document.fullscreenElement && document.exitFullscreen) await document.exitFullscreen();
+  } catch (_) {}
+}
+
+els.modeSelect.value = state.mode;
+els.timeSelect.value = String(state.seconds);
+els.rhymeSelect.value = state.rhymeType;
+setMode(state.mode);
+
+els.modeSelect.addEventListener('change', e => setMode(e.target.value));
+els.timeSelect.addEventListener('change', e => {
+  state.seconds = Number(e.target.value);
+  localStorage.setItem('hf-seconds', String(state.seconds));
+  stopSession();
+});
+els.rhymeSelect.addEventListener('change', e => {
+  state.rhymeType = e.target.value;
+  localStorage.setItem('hf-rhyme-type', state.rhymeType);
+  if (state.mode === 'dual') {
+    if (state.dual.a.word) loadLane('a', state.dual.a.word);
+    if (state.dual.bStarted && state.dual.b.word) loadLane('b', state.dual.b.word);
+  } else if (state.single.word) {
+    loadSingle(state.single.word);
+  }
+});
+els.primaryBtn.addEventListener('click', primaryAction);
+els.searchBtn.addEventListener('click', () => loadSingle(els.seedInput.value.trim() || randomWord([state.single.word])));
+els.seedInput.addEventListener('keydown', e => { if (e.key === 'Enter') primaryAction(); });
+els.holdBtn.addEventListener('click', toggleHold);
+els.focusHoldBtn.addEventListener('click', toggleHold);
+els.nextBtn.addEventListener('click', nextNow);
+els.focusNextBtn.addEventListener('click', nextNow);
+els.stopBtn.addEventListener('click', stopSession);
+els.focusBtn.addEventListener('click', enterFocus);
+els.exitFocusBtn.addEventListener('click', exitFocus);
+els.focusHandle.addEventListener('click', () => els.focusDock.classList.toggle('hidden'));
+els.dualSwapBtn.addEventListener('click', switchDualBank);
+
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement && state.focus) {
+    state.focus = false;
+    document.body.classList.remove('focus-mode');
+    els.focusHandle.classList.add('hidden');
+    els.focusDock.classList.add('hidden');
+  }
+});
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+}
+
+</script>
+</body>
+</html>
